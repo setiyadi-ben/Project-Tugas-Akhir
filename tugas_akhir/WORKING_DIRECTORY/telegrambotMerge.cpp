@@ -43,16 +43,18 @@ void bot_setup()
                             "{\"command\":\"help\",  \"description\":\"Get bot usage help\"},"
                             "{\"command\":\"start\", \"description\":\"Message sent when you open a chat with a bot\"},"
                             "{\"command\":\"stop\", \"description\":\"Message sent when you open a chat with a bot\"},"
+                            // Print actuators status
+                            "{\"command\":\"status\",\"description\":\"Answer device current status\"}"
                             // Print sensor reading from DHT11 & BH1750
                             "{\"command\":\"sensorVal\", \"description\":\"Message sent when you open a chat with a bot\"},"
                             // Input time for working actuators operate
                             "{\"command\":\"timeInput\", \"description\":\"Message sent when you open a chat with a bot\"},"
                             // Setmode for actuators to work auto with timeInput or manually
                             "{\"command\":\"setMode\", \"description\":\"Message sent when you open a chat with a bot\"},"
-                            // 
+                            // Configure WaterPump actuator
                             "{\"command\":\"waterPump\", \"description\":\"Message sent when you open a chat with a bot\"},"
-                            "{\"command\":\"sensorVal\", \"description\":\"Message sent when you open a chat with a bot\"},"
-                            "{\"command\":\"status\",\"description\":\"Answer device current status\"}" // no comma on last command
+                            // Configure LampuFertilizer actuator
+                            "{\"command\":\"lampuFertilizer\",\"description\":\"Answer device current status\"}" // no comma on last command
                             "]");
   bot.setMyCommands(commands);
   //bot.sendMessage("25235518", "Hola amigo!", "Markdown");
