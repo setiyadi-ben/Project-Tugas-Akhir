@@ -11,156 +11,134 @@ FROM GITHUB AND MENTIONED BELOW
 // Lib for communicating with ESP32 PlatformIO Framework
 #include <Arduino.h>
 
-// Import lib sensor DHT11
-/*
-- DHT Sensor Library: https://github.com/adafruit/DHT-sensor-library
-- Adafruit Unified Sensor Lib: https://github.com/adafruit/Adafruit_Sensor
-- Example testing sketch for various DHT humidity/temperature sensors written by ladyada
-*/
-#include <DHT.h>
-#include <DHT.h>
-#include <DHT_U.h>
-#define DHTPIN 4  // Digital pin connected to the DHT sensor
-// Feather HUZZAH ESP8266 note: use pins 3, 4, 5, 12, 13 or 14 --
-// Pin 15 can work but DHT must be disconnected during program upload.
+#include <WiFi.h>
+#include <WiFiClientSecure.h>
+#include <UniversalTelegramBot.h>
 
-// Uncomment whatever type you're using!
-#define DHTTYPE DHT11   // DHT 11
-//#define DHTTYPE DHT22   // DHT 22  (AM2302), AM2321
-//#define DHTTYPE DHT21   // DHT 21 (AM2301)
+// Wifi network station credentials
+#define WIFI_SSID "Ariaqi 3"
+#define WIFI_PASSWORD "lisa2218"
+// Telegram BOT Token (Get from Botfather)
+#define BOT_TOKEN "5935516261:AAEQApSV3YAfcGkdDzwi13YwcQNMWIJ_3xg"
+// Using CHAT_ID to lock user that can access your bot outside the Group, 
+// get the id on @RawDataBot
+#define CHAT_ID "-1001825459630"
 
-// Import lib sensor BH1750
-#include <Wire.h>
-#include <BH1750.h>
+const unsigned long BOT_MTBS = 1000; // mean time between scan messages
+unsigned long bot_lasttime; // last time messages' scan has been done
 
-/*********
-  Rui Santos
-  Complete project details at https://RandomNerdTutorials.com/esp32-relay-module-ac-web-server/
+const int ledPin = 2;
+bool ledState = LOW;
+
+WiFiClientSecure secured_client;
+UniversalTelegramBot bot(BOT_TOKEN, secured_client);
+
+void handleNewMessages(int numNewMessages)
+{
+  Serial.print("handleNewMessages ");
+  Serial.println(numNewMessages);
+
+    for (int i=0; i<numNewMessages; i++) {
+    // Chat id of the requester
+    String chat_id = String(bot.messages[i].chat_id);
+    if (chat_id != CHAT_ID){
+      bot.sendMessage(chat_id, "Unauthorized user", "");
+      return;
+    }
+  }
   
-  The above copyright notice and this permission notice shall be included in all
-  copies or substantial portions of the Software.
-*********/
+  String answer;
+  for (int i = 0; i < numNewMessages; i++)
+  {
+    telegramMessage &msg = bot.messages[i];
+    Serial.println("Received " + msg.text);
+    // add @ to mention the bot in command message
+    if (msg.text == "/help@bsfcontrol_bot")
+      answer = "So you need _help_, uh? me too! use /start or /status";
+    if (msg.text == "/start")
+      answer = "Welcome my new friend! You are the first *" + msg.from_name + "* I've ever met";
+    if (msg.text == "/led_on@bsfcontrol_bot"){
+      answer = "LED state set to ON";
+      ledState = HIGH;
+      digitalWrite(ledPin, ledState);}
+    if (msg.text == "/led_off@bsfcontrol_bot"){
+      answer = "LED state set to OFF";
+      ledState = LOW;
+      digitalWrite(ledPin, ledState);}
+    if (msg.text == "/status@bsfcontrol_bot")
+      answer = "All is good here, thanks for asking!";
+   
 
-const int relay1 = 23;
-const int relay2 = 19;
-const int relay3 = 18;
-const int relay4 = 5;
+    // else
+    //   answer = "Say what?";
 
-/*
-// Interfacing DHT Sensor
-- Connect pin 1 (on the left) of the sensor to +5V
-- NOTE: If using a board with 3.3V logic like an Arduino Due connect pin 1
-  to 3.3V instead of 5V!
-- Connect pin 2 of the sensor to whatever your DHTPIN is
-- Connect pin 4 (on the right) of the sensor to GROUND
-- Connect a 10K resistor from pin 2 (data) to pin 1 (power) of the sensor
-
-// Initialize DHT sensor.
-- Note that older versions of this library took an optional third parameter to
-  tweak the timings for faster processors.  This parameter is no longer needed
-  as the current DHT reading algorithm adjusts itself to work on faster procs.
-*/
-DHT dht(DHTPIN, DHTTYPE);
-
-// Initialize BH1750 sensor.
-BH1750 lightMeter;
-
-void setup(){
-  Serial.begin(9600);
-
-  dht.begin();
-
-  // Initialize the I2C bus (BH1750 library doesn't do this automatically)
-  Wire.begin();
-  // On esp8266 you can select SCL and SDA pins using Wire.begin(D4, D3);
-  // For Wemos / Lolin D1 Mini Pro and the Ambient Light shield use Wire.begin(D2, D1);
-
-  lightMeter.begin();
-
-  // Setup Relay Pin as OUTPUT
-  pinMode(relay1, OUTPUT);
-  pinMode(relay2, OUTPUT);
-  pinMode(relay3, OUTPUT);
-  pinMode(relay4, OUTPUT);
-
-  Serial.println(F("Penggabungan Sensor Reading DHT11, BH1750 dan Relay"));
+    bot.sendMessage(msg.chat_id, answer, "Markdown");
+  }
 }
 
-void loop() {
-  // Reading temperature or humidity takes about 250 milliseconds!
-  // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
-  // Read temperature as Celsius (the default)
-  float t = dht.readTemperature();
-  float h = dht.readHumidity();
-  // Read temperature as Fahrenheit (isFahrenheit = true)
-  // float f = dht.readTemperature(true);
+void bot_setup()
+{
+  const String commands = F("[" 
+                            "{\"command\":\"help\",  \"description\":\"Get bot usage help\"},"
+                            "{\"command\":\"start\", \"description\":\"Message sent when you open a chat with a bot\"},"
+                            "{\"command\":\"led_on\", \"description\":\"turn led on\"},"
+                            "{\"command\":\"led_off\", \"description\":\"turn led off\"},"
+                            "{\"command\":\"status\",\"description\":\"Answer device current status\"}" // no comma on last command
+                            "]");
+  bot.setMyCommands(commands);
+  //bot.sendMessage("25235518", "Hola amigo!", "Markdown");
+}
 
-  // Check if any reads failed and exit early (to try again).
-  if (isnan(h) || isnan(t) /* || isnan(f) */) {
-    Serial.println(F("Failed to read from DHT sensor!"));
-    return;
+void setup()
+{
+  Serial.begin(9600);
+  Serial.println();
+
+  pinMode(ledPin, OUTPUT);
+  digitalWrite(ledPin, ledState);
+
+  // attempt to connect to Wifi network:
+  Serial.print("Connecting to Wifi SSID ");
+  Serial.print(WIFI_SSID);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  secured_client.setCACert(TELEGRAM_CERTIFICATE_ROOT); // Add root certificate for api.telegram.org
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    Serial.print(".");
+    delay(500);
   }
+  Serial.print("\nWiFi connected. IP address: ");
+  Serial.println(WiFi.localIP());
 
-  // Compute heat index in Fahrenheit (the default)
-  // float hif = dht.computeHeatIndex(f, h);
-  // Compute heat index in Celsius (isFahreheit = false)
-  // float hic = dht.computeHeatIndex(t, h, false);
+  Serial.print("Retrieving time: ");
+  configTime(0, 0, "pool.ntp.org"); // get UTC time via NTP
+  time_t now = time(nullptr);
+  while (now < 24 * 3600)
+  {
+    Serial.print(".");
+    delay(100);
+    now = time(nullptr);
+  }
+  Serial.println(now);
+  // Print ESP32 Local IP Address
+  Serial.println(WiFi.localIP());
 
-  // Print sensor readings
-  Serial.print(F("Temperature: "));
-  Serial.print(t);
-  Serial.print(F("°C "));
-  Serial.print(F("Humidity: "));
-  Serial.print(h);
-  Serial.print(F("% "));
-  // Serial.print(f);
-  // Serial.print(F("°F  Heat index: "));
-  // Serial.print(hic);
-  // Serial.print(F("°C "));
-  // Serial.print(hif);
-  // Serial.println(F("°F"));
+  bot_setup();
+}
 
-  // Compute value of light intensity
-  float lux = lightMeter.readLightLevel();
-  // Print sensor readings
-  Serial.print("Light: ");
-  Serial.print(lux);
-  Serial.println(" lx");
-  delay(2000);
+void loop()
+{
+  if (millis() - bot_lasttime > BOT_MTBS)
+  {
+    int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
 
-  // Normally Open configuration, send LOW signal to let current flow
-  // (if you're usong Normally Closed configuration send HIGH signal)
-  digitalWrite(relay1, LOW);
-  Serial.println("Relay 1_Current Flowing");
-  delay(1000); 
-  
-  digitalWrite(relay2, LOW);
-  Serial.println("Relay 2_Current Flowing");
-  delay(2000);
+    while (numNewMessages)
+    {
+      Serial.println("got response");
+      handleNewMessages(numNewMessages);
+      numNewMessages = bot.getUpdates(bot.last_message_received + 1);
+    }
 
-  digitalWrite(relay3, LOW);
-  Serial.println("Relay 3_Current Flowing");
-  delay(3000);
-
-  digitalWrite(relay4, LOW);
-  Serial.println("Relay 4_Current Flowing");
-  delay(4000);
-  
-  // Normally Open configuration, send HIGH signal stop current flow
-  // (if you're usong Normally Closed configuration send LOW signal)
-  digitalWrite(relay1, HIGH);
-  Serial.println("Relay1_Current not Flowing");
-  delay(1000);
-
-  digitalWrite(relay2, HIGH);
-  Serial.println("Relay2_Current not Flowing");
-  delay(2000);
-
-  digitalWrite(relay3, HIGH);
-  Serial.println("Relay3_Current not Flowing");
-  delay(3000);
-
-  digitalWrite(relay4, HIGH);
-  Serial.println("Relay4_Current not Flowing");
-  delay(4000);
+    bot_lasttime = millis();
+  }
 }
