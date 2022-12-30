@@ -54,9 +54,11 @@ void handleNewMessages(int numNewMessages)
     Serial.println("Received " + msg.text);
     // add @ to mention the bot in command message
     if (msg.text == "/help@bsfcontrol_bot")
-      answer = "So you need _help_, uh? me too! use /start or /status";
+      answer = "So, you need _help_, uh? me too! use /start or /status and /print";
     if (msg.text == "/start")
       answer = "Welcome my new friend! You are the first *" + msg.from_name + "* I've ever met";
+    if (msg.text == "/print@bsfcontrol_bot")
+      answer = "All is good here, thanks for asking!";
     if (msg.text == "/led_on@bsfcontrol_bot"){
       answer = "LED state set to ON";
       ledState = HIGH;
@@ -65,9 +67,6 @@ void handleNewMessages(int numNewMessages)
       answer = "LED state set to OFF";
       ledState = LOW;
       digitalWrite(ledPin, ledState);}
-    if (msg.text == "/status@bsfcontrol_bot")
-      answer = "All is good here, thanks for asking!";
-   
 
     // else
     //   answer = "Say what?";
@@ -79,11 +78,24 @@ void handleNewMessages(int numNewMessages)
 void bot_setup()
 {
   const String commands = F("[" 
-                            "{\"command\":\"help\",  \"description\":\"Get bot usage help\"},"
-                            "{\"command\":\"start\", \"description\":\"Message sent when you open a chat with a bot\"},"
+  /*
+  Command format is customizeable with combination of lowercase and "_". Except that, it will not shown
+  in telegram bot command "/" ex: "{\"command\":\"sensorVal\",  \"description\":\"Print nilai output sensor\"},"
+  */
+                            // Auto setup with provided timeInput data
+                            "{\"command\":\"setup\", \"description\":\"Setup penjadwalan otomatis\"},"
+                            // Setmode for actuators to work auto with timeInput or manually
+                            "{\"command\":\"setmode\", \"description\":\"Setup esp32 manual atau auto\"},"
+
+                            "{\"command\":\"help\",  \"description\":\"Panduan penggunaan bot\"},"
+                            "{\"command\":\"start\", \"description\":\"Menyalakan scr manual aktuator\"},"
+                            "{\"command\":\"stop\", \"description\":\"Memberhentikan scr manual aktuator\"},"
+                            
+                            // Print sensor reading from DHT11 & BH1750
+                            "{\"command\":\"print\", \"description\":\"Output status dari esp32\"},"
+
                             "{\"command\":\"led_on\", \"description\":\"turn led on\"},"
-                            "{\"command\":\"led_off\", \"description\":\"turn led off\"},"
-                            "{\"command\":\"status\",\"description\":\"Answer device current status\"}" // no comma on last command
+                            "{\"command\":\"led_off\", \"description\":\"turn led off\"}" // no comma on last command
                             "]");
   bot.setMyCommands(commands);
   //bot.sendMessage("25235518", "Hola amigo!", "Markdown");
