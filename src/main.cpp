@@ -53,10 +53,16 @@ void handleNewMessages(int numNewMessages)
     telegramMessage &msg = bot.messages[i];
     Serial.println("Received " + msg.text);
     // add @ to mention the bot in command message
+    if (msg.text == "/setup@bsfcontrol_bot")
+      answer = "===========================";
     if (msg.text == "/help@bsfcontrol_bot")
       answer = "So, you need _help_, uh? me too! use /start or /status and /print";
+    if (msg.text == "/switch@bsfcontrol_bot")
+      answer = "----------------------------";
     if (msg.text == "/start")
       answer = "Welcome my new friend! You are the first *" + msg.from_name + "* I've ever met";
+    if (msg.text == "/print@bsfcontrol_bot")
+      answer = "----------------------------";
     if (msg.text == "/print@bsfcontrol_bot")
       answer = "All is good here, thanks for asking!";
     if (msg.text == "/led_on@bsfcontrol_bot"){
@@ -85,11 +91,12 @@ void bot_setup()
                             // Auto setup with provided timeInput data
                             "{\"command\":\"setup\", \"description\":\"Setup penjadwalan otomatis\"},"
                             // Setmode for actuators to work auto with timeInput or manually
-                            "{\"command\":\"setmode\", \"description\":\"Setup esp32 manual atau auto\"},"
+                            //"{\"command\":\"setmode\", \"description\":\"Setup esp32 manual atau auto\"},"
 
                             "{\"command\":\"help\",  \"description\":\"Panduan penggunaan bot\"},"
-                            "{\"command\":\"start\", \"description\":\"Menyalakan scr manual aktuator\"},"
-                            "{\"command\":\"stop\", \"description\":\"Memberhentikan scr manual aktuator\"},"
+                            
+                            // Switch On / Off actuator
+                            "{\"command\":\"switch\", \"description\":\"Saklar digital aktuator scr manual\"},"
                             
                             // Print sensor reading from DHT11 & BH1750
                             "{\"command\":\"print\", \"description\":\"Output status dari esp32\"},"
