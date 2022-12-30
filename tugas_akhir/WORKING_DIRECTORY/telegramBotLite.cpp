@@ -1,3 +1,16 @@
+/*
+IMPORTANT NOTES https://docs.platformio.org/en/latest/faq/ino-to-cpp.html
+
+CREATED BY SETIYADI_BEN ALIAS BENNY HARTANTO SETIYADI FROM POLITEKNIK NEGERI SEMARANG AS A PURPOSE FOR
+COMPLETING THESIS AKA "TUGAS AKHIR" FOR GET BASc IN TELECOMMUNICATION ENGINEERING.
+
+IN ADDITION, THESE SCRIPTS LIKE SENSOR READINGS, TELEGRAM BOT, TIMING, .etc ARE MODIFIED FROM ORIGINAL SOURCE
+FROM GITHUB AND MENTIONED BELOW
+*/
+
+// Lib for communicating with ESP32 PlatformIO Framework
+#include <Arduino.h>
+
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <UniversalTelegramBot.h>
@@ -7,10 +20,16 @@
 #define WIFI_PASSWORD "lisa2218"
 // Telegram BOT Token (Get from Botfather)
 #define BOT_TOKEN "5935516261:AAEQApSV3YAfcGkdDzwi13YwcQNMWIJ_3xg"
+// Using CHAT_ID to lock user that can access your bot outside the Group, 
+// get the id on @RawDataBot
+#define CHAT_ID "-1001825459630"
 
 const unsigned long BOT_MTBS = 1000; // mean time between scan messages
-
 unsigned long bot_lasttime; // last time messages' scan has been done
+
+const int ledPin = 2;
+bool ledState = LOW;
+
 WiFiClientSecure secured_client;
 UniversalTelegramBot bot(BOT_TOKEN, secured_client);
 
@@ -18,26 +37,42 @@ void handleNewMessages(int numNewMessages)
 {
   Serial.print("handleNewMessages ");
   Serial.println(numNewMessages);
+
+    for (int i=0; i<numNewMessages; i++) {
+    // Chat id of the requester
+    String chat_id = String(bot.messages[i].chat_id);
+    if (chat_id != CHAT_ID){
+      bot.sendMessage(chat_id, "Unauthorized user", "");
+      return;
+    }
+  }
   
   String answer;
   for (int i = 0; i < numNewMessages; i++)
   {
     telegramMessage &msg = bot.messages[i];
     Serial.println("Received " + msg.text);
-    if (msg.text == "/help")
-      answer = "So you need _help_, uh? me too! use /start or /status";
-    else if (msg.text == "/start")
-      answer = "Welcome my new friend! You are the first *" + msg.from_name + "* I've ever met"
-    // set the LED to high
-    digitalWrite(LED_BUILTIN, HIGH);
-    else if (msg.text == "/stop")
-      answer = "Welcome my new friend! You are the second *" + msg.from_name + "* I've ever met"
-          // set the LED to low
-      digitalWrite(LED_BUILTIN, LOW);
-    else if (msg.text == "/status")
+    // add @ to mention the bot in command message
+    if (msg.text == "/help@bsfcontrol_bot")
+      answer = "So you need _help_, uh? me too! use /start or /status and /print";
+    if (msg.text == "/start")
+      answer = "Welcome my new friend! You are the first *" + msg.from_name + "* I've ever met";
+    if (msg.text == "/led_on@bsfcontrol_bot"){
+      answer = "LED state set to ON";
+      ledState = HIGH;
+      digitalWrite(ledPin, ledState);}
+    if (msg.text == "/led_off@bsfcontrol_bot"){
+      answer = "LED state set to OFF";
+      ledState = LOW;
+      digitalWrite(ledPin, ledState);}
+    if (msg.text == "/status@bsfcontrol_bot")
       answer = "All is good here, thanks for asking!";
-    else
-      answer = "Say what?";
+    if (msg.text == "/print@bsfcontrol_bot")
+      answer = "Air mengalir sampai ke puncak!";
+   
+
+    // else
+    //   answer = "Say what?";
 
     bot.sendMessage(msg.chat_id, answer, "Markdown");
   }
@@ -45,22 +80,13 @@ void handleNewMessages(int numNewMessages)
 
 void bot_setup()
 {
-  const String commands = F("["
+  const String commands = F("[" 
                             "{\"command\":\"help\",  \"description\":\"Get bot usage help\"},"
                             "{\"command\":\"start\", \"description\":\"Message sent when you open a chat with a bot\"},"
-                            "{\"command\":\"stop\", \"description\":\"Message sent when you open a chat with a bot\"},"
-                            // Print actuators status
-                            "{\"command\":\"status\",\"description\":\"Answer device current status\"}"
-                            // Print sensor reading from DHT11 & BH1750
-                            "{\"command\":\"sensorVal\", \"description\":\"Message sent when you open a chat with a bot\"},"
-                            // Input time for working actuators operate
-                            "{\"command\":\"timeInput\", \"description\":\"Message sent when you open a chat with a bot\"},"
-                            // Setmode for actuators to work auto with timeInput or manually
-                            "{\"command\":\"setMode\", \"description\":\"Message sent when you open a chat with a bot\"},"
-                            // Configure WaterPump actuator
-                            "{\"command\":\"waterPump\", \"description\":\"Message sent when you open a chat with a bot\"},"
-                            // Configure LampuFertilizer actuator
-                            "{\"command\":\"lampuFertilizer\",\"description\":\"Answer device current status\"}" // no comma on last command
+                            "{\"command\":\"led_on\", \"description\":\"turn led on\"},"
+                            "{\"command\":\"led_off\", \"description\":\"turn led off\"},"
+                            "{\"command\":\"status\", \"description\":\"turn led off\"},"
+                            "{\"command\":\"print\",\"description\":\"Answer device current status\"}" // no comma on last command
                             "]");
   bot.setMyCommands(commands);
   //bot.sendMessage("25235518", "Hola amigo!", "Markdown");
@@ -71,8 +97,8 @@ void setup()
   Serial.begin(9600);
   Serial.println();
 
-  // set the built-in LED pin as an output
-  pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(ledPin, OUTPUT);
+  digitalWrite(ledPin, ledState);
 
   // attempt to connect to Wifi network:
   Serial.print("Connecting to Wifi SSID ");
@@ -97,6 +123,8 @@ void setup()
     now = time(nullptr);
   }
   Serial.println(now);
+  // Print ESP32 Local IP Address
+  Serial.println(WiFi.localIP());
 
   bot_setup();
 }
