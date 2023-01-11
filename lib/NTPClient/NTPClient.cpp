@@ -136,6 +136,9 @@ unsigned long NTPClient::getEpochTime() const {
          ((millis() - this->_lastUpdate) / 1000); // Time since last update
 }
 
+int NTPClient::getMonth() const {
+  return (((this->getEpochTime() / 86400L / 30) + 4 ) % 12) + 1;
+}
 int NTPClient::getDay() const {
   return (((this->getEpochTime()  / 86400L) + 4 ) % 7); //0 is Sunday
 }
