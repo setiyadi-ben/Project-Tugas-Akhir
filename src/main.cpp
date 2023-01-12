@@ -153,32 +153,6 @@ void printLocalTime()
     Serial.println("Failed to obtain time");
     return;
   }
-  Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
-  Serial.print("Day of week: ");
-  Serial.println(&timeinfo, "%A");
-  Serial.print("Month: ");
-  Serial.println(&timeinfo, "%B");
-  Serial.print("Day of Month: ");
-  Serial.println(&timeinfo, "%d");
-  Serial.print("Year: ");
-  Serial.println(&timeinfo, "%Y");
-  Serial.print("Hour: ");
-  Serial.println(&timeinfo, "%H");
-  Serial.print("Hour (12 hour format): ");
-  Serial.println(&timeinfo, "%I");
-  Serial.print("Minute: ");
-  Serial.println(&timeinfo, "%M");
-  Serial.print("Second: ");
-  Serial.println(&timeinfo, "%S");
-
-  Serial.println("Time variables");
-  char timeHour[3];
-  strftime(timeHour, 3, "%H", &timeinfo);
-  Serial.println(timeHour);
-  char timeWeekDay[10];
-  strftime(timeWeekDay, 10, "%A", &timeinfo);
-  Serial.println(timeWeekDay);
-  Serial.println();
 }
 
 void handleNewMessages(int numNewMessages)
@@ -430,9 +404,6 @@ void bot_setup()
 void setup()
 {
   Serial.begin(9600);
-  // Init and get the time
-  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
-  printLocalTime();
   // Initialize dht11 lib
   dht.begin();
   // Initialize the I2C bus (BH1750 library doesn't do this automatically)
@@ -460,7 +431,6 @@ void setup()
   Serial.print("Connecting to Wifi SSID ");
   Serial.print(WIFI_SSID);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-
   secured_client.setCACert(TELEGRAM_CERTIFICATE_ROOT); // Add root certificate for api.telegram.org
   while (WiFi.status() != WL_CONNECTED)
   {
@@ -469,19 +439,12 @@ void setup()
   }
   Serial.print("\nWiFi connected. IP address: ");
   Serial.println(WiFi.localIP());
-
-  // Serial.print("Retrieving time: ");
-  // configTime(0, 0, "pool.ntp.org"); // get UTC time via NTP
-  // time_t now = time(nullptr);
-  // while (now < 24 * 3600)
-  // {
-  //   Serial.print(".");
-  //   delay(100);
-  //   now = time(nullptr);
-  // }
-  // Serial.println(now);
   // Print ESP32 Local IP Address
   Serial.println(WiFi.localIP());
+
+  // Init and get the time
+  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+  printLocalTime();
 
   bot_setup();
 }
@@ -505,66 +468,63 @@ void loop()
   String waterPumpState = state1_waterPump == LOW ? lowState : highState;
   String lampuFertilizerState = state2_lampuFertilizer == LOW ? lowState : highState;
 
-  // String date = String(day) + " ";
-  // switch (month)
-  // {
-  // case 1:
-  //   date += "Jan";
-  //   break;
-  // case 2:
-  //   date += "Feb";
-  //   break;
-  // // ...
-  // case 12:
-  //   date += "Dec";
-  //   break;
-  // }
-
-  // String time = String(hour) + ":" + String(minute);
-  // if (minute < 10)
-  //   time = String(hour) + ":0" + String(minute);
-
-  // Print the sensor data on the LCD display
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("Temp: ");
-  lcd.print(temperature);
-  lcd.print(" C ");
-  // lcd.print(date);
-  lcd.setCursor(0, 1);
-  lcd.print("Humi: ");
-  lcd.print(humidity);
-  lcd.print(" % ");
-  // lcd.print(time);
-  lcd.setCursor(0, 2);
-  lcd.print("Lux : ");
-  lcd.print(lux);
-  lcd.print(" lx");
-  lcd.setCursor(0, 3);
-  lcd.print("Pump: ");
-  lcd.print(waterPumpState);
-  lcd.print(" Lamp: ");
-  lcd.print(lampuFertilizerState);
-  printLocalTime();
-  delay(1000);
-
-  if (isnan(humidity) || isnan(temperature) /* || isnan(f) */)
-  {
-    Serial.println(F("Failed to read from DHT sensor!"));
-    return;
-  }
-
-  if (millis() - bot_lasttime > BOT_MTBS)
-  {
-    int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
-
-    while (numNewMessages)
+ // LCD 20X4 CHAR SHORT DATETIME OUTPUT
+ 
+    struct tm timeinfo;
+    if (!getLocalTime(&timeinfo))
     {
-      Serial.println("got response");
-      handleNewMessages(numNewMessages);
-      numNewMessages = bot.getUpdates(bot.last_message_received + 1);
+      Serial.println("Failed to obtain time");
+      return;
     }
 
-    bot_lasttime = millis();
+    char formattedDate[7];
+    strftime(formattedDate, sizeof(formattedDate), "%d %b", &timeinfo);
+    Serial.println(formattedDate);
+    char formattedTime[6];
+    strftime(formattedTime, sizeof(formattedTime), "%H:%M", &timeinfo);
+    Serial.println(formattedTime);
+
+    // Print the sensor data on the LCD display
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Temp: ");
+    lcd.print(temperature);
+    lcd.print(" C ");
+    lcd.print(formattedDate);
+    lcd.setCursor(0, 1);
+    lcd.print("Humi: ");
+    lcd.print(humidity);
+    lcd.print(" % ");
+    lcd.print(formattedTime);
+    lcd.setCursor(0, 2);
+    lcd.print("Lux : ");
+    lcd.print(lux);
+    lcd.print(" lx");
+    lcd.setCursor(0, 3);
+    lcd.print("Pump: ");
+    lcd.print(waterPumpState);
+    lcd.print(" Lamp: ");
+    lcd.print(lampuFertilizerState);
+    printLocalTime();
+    delay(1000);
+
+    if (isnan(humidity) || isnan(temperature) /* || isnan(f) */)
+    {
+      Serial.println(F("Failed to read from DHT sensor!"));
+      return;
+    }
+
+    if (millis() - bot_lasttime > BOT_MTBS)
+    {
+      int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
+
+      while (numNewMessages)
+      {
+        Serial.println("got response");
+        handleNewMessages(numNewMessages);
+        numNewMessages = bot.getUpdates(bot.last_message_received + 1);
+      }
+
+      bot_lasttime = millis();
+    }
   }
-}

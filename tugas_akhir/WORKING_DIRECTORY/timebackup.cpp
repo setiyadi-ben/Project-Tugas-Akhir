@@ -56,6 +56,15 @@ void printLocalTime(){
   Serial.print("Second: ");
   Serial.println(&timeinfo, "%S");
 
+  // LCD 20X4 CHAR OUTPUT
+  char formattedDate[7];
+  strftime(formattedDate, sizeof(formattedDate), "%d %b", &timeinfo);
+  Serial.println(formattedDate);
+
+  char formattedTime[6];
+  strftime(formattedTime, sizeof(formattedTime), "%H:%M", &timeinfo);
+  Serial.println(formattedTime);
+
   Serial.println("Time variables");
   char timeHour[3];
   strftime(timeHour,3, "%H", &timeinfo);
