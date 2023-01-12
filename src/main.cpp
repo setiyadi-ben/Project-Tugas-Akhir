@@ -447,8 +447,8 @@ void setup()
   lcd.backlight();
 
   // define builtin led
-  pinMode(ledPin, OUTPUT);
-  digitalWrite(ledPin, ledState);
+  // pinMode(ledPin, OUTPUT);
+  // digitalWrite(ledPin, ledState);
 
   // Setup Relay Pin as OUTPUT
   pinMode(relay1_waterPump, OUTPUT);
@@ -505,7 +505,7 @@ void loop()
   String waterPumpState = state1_waterPump == LOW ? lowState : highState;
   String lampuFertilizerState = state2_lampuFertilizer == LOW ? lowState : highState;
 
-  String date = String(day) + " ";
+  // String date = String(day) + " ";
   // switch (month)
   // {
   // case 1:
