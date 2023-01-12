@@ -461,10 +461,6 @@ void setup()
   Serial.print(WIFI_SSID);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
-  timeClient.begin();
-  // Set offset time zone GMT+7 (in seconds)
-  timeClient.setTimeOffset(25200);
-
   secured_client.setCACert(TELEGRAM_CERTIFICATE_ROOT); // Add root certificate for api.telegram.org
   while (WiFi.status() != WL_CONNECTED)
   {
@@ -509,13 +505,6 @@ void loop()
   String waterPumpState = state1_waterPump == LOW ? lowState : highState;
   String lampuFertilizerState = state2_lampuFertilizer == LOW ? lowState : highState;
 
-  timeClient.update();
-
-  // int month = timeClient.getMonth();
-  int day = timeClient.getDay();
-  int hour = timeClient.getHours();
-  int minute = timeClient.getMinutes();
-
   String date = String(day) + " ";
   // switch (month)
   // {
@@ -531,9 +520,9 @@ void loop()
   //   break;
   // }
 
-  String time = String(hour) + ":" + String(minute);
-  if (minute < 10)
-    time = String(hour) + ":0" + String(minute);
+  // String time = String(hour) + ":" + String(minute);
+  // if (minute < 10)
+  //   time = String(hour) + ":0" + String(minute);
 
   // Print the sensor data on the LCD display
   lcd.clear();
@@ -541,12 +530,12 @@ void loop()
   lcd.print("Temp: ");
   lcd.print(temperature);
   lcd.print(" C ");
-  lcd.print(date);
+  // lcd.print(date);
   lcd.setCursor(0, 1);
   lcd.print("Humi: ");
   lcd.print(humidity);
   lcd.print(" % ");
-  lcd.print(time);
+  // lcd.print(time);
   lcd.setCursor(0, 2);
   lcd.print("Lux : ");
   lcd.print(lux);
