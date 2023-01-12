@@ -10,7 +10,7 @@
   FROM GITHUB AND MENTIONED BELOW
 
   BIG THANKS TO :
-  ( ALLAH, Ari Sriyanto N., S.T., M.T., M.Sc as DOSEN PEMBIMBING I & SINDUNG H.W.S., B.S.E.E, M.Eng.Sc. as II 
+  ( ALLAH, Ari Sriyanto N., S.T., M.T., M.Sc as DOSEN PEMBIMBING I & SINDUNG H.W.S., B.S.E.E, M.Eng.Sc. as II
   + Tahan Prahara., ST., M.Kom., Ngadiyono as a Section Head of Maggot BSF Semarang	(https://tlkm.id/RF0sFJ),
   CHATGPT, STACKOVERFLOW, YOUTUBE, [ ANIME, CIGARETTE & STEAM GAMES for releasing my stress ])
 */
@@ -25,10 +25,10 @@
 /*
   Rui Santos
   Complete project details at https://RandomNerdTutorials.com/esp32-date-time-ntp-client-server-arduino/
-  
+
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files.
-  
+
   The above copyright notice and this permission notice shall be included in all
   copies or substantial portions of the Software.
 */
@@ -102,10 +102,10 @@ DHT dht(DHTPIN, DHTTYPE);
 /*
   Rui Santos
   Complete project details at https://randomnerdtutorials.com/esp32-bh1750-ambient-light-sensor/
-  
+
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files.
-  
+
   The above copyright notice and this permission notice shall be included in all
   copies or substantial portions of the Software.
 */
@@ -123,10 +123,10 @@ LiquidCrystal_I2C lcd(0x27, 20, 4); // Address 0x27, 20 columns, 4 rows
 /*
   Rui Santos
   Complete project details at https://RandomNerdTutorials.com/esp32-relay-module-ac-web-server/
-  
+
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files.
-  
+
   The above copyright notice and this permission notice shall be included in all
   copies or substantial portions of the Software.
 */
@@ -145,9 +145,11 @@ bool state4_NaN = LOW;
 // const int ledPin = 2;
 // bool ledState = LOW;
 
-void printLocalTime(){
+void printLocalTime()
+{
   struct tm timeinfo;
-  if(!getLocalTime(&timeinfo)){
+  if (!getLocalTime(&timeinfo))
+  {
     Serial.println("Failed to obtain time");
     return;
   }
@@ -171,10 +173,10 @@ void printLocalTime(){
 
   Serial.println("Time variables");
   char timeHour[3];
-  strftime(timeHour,3, "%H", &timeinfo);
+  strftime(timeHour, 3, "%H", &timeinfo);
   Serial.println(timeHour);
   char timeWeekDay[10];
-  strftime(timeWeekDay,10, "%A", &timeinfo);
+  strftime(timeWeekDay, 10, "%A", &timeinfo);
   Serial.println(timeWeekDay);
   Serial.println();
 }
