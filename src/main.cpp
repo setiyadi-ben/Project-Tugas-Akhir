@@ -1,5 +1,6 @@
 /*
   IMPORTANT NOTES VISIT :
+  - https://randomnerdtutorials.com/esp32-pinout-reference-gpios/
   - https://docs.platformio.org/en/latest/faq/ino-to-cpp.html
   - https://github.com/setiyadi-ben/Project-Tugas-Akhir
 
@@ -133,13 +134,20 @@ LiquidCrystal_I2C lcd(0x27, 20, 4); // Address 0x27, 20 columns, 4 rows
 // relay pinout
 const int relay1_waterPump = 23;
 const int relay2_lampuFertilizer = 19;
-const int relay3_solenoidValve = 18;
-const int relay4 = 5;
+// unused relay
+#define relay3_solenoidValve 18
+
+
+// Manual switch from GPIO pin
+const int switch_pin = 5;
+#define switch_waterPump 13
+#define switch_lampuFertilizer 12
+// #define switch_lampuFertilizer 12
+
 // relay default state (my relay configuration is Normally Closed)
 bool state1_waterPump = LOW;
 bool state2_lampuFertilizer = LOW;
 bool state3_solenoidValve = LOW;
-bool state4_NaN = LOW;
 
 // test state using builtin led esp32
 // const int ledPin = 2;
@@ -195,8 +203,54 @@ void handleNewMessages(int numNewMessages)
         // Toggle the ledState and update the LED itself
         // ledState = !ledState;
         // digitalWrite(ledPin, ledState);
-        state1_waterPump = !state1_waterPump;
-        digitalWrite(relay1_waterPump, state1_waterPump);
+
+        // Control Manual GPIO Switch
+        bool flag = false;
+        if (digitalRead(switch_pin) == HIGH)
+        {
+          flag = true;
+          if (digitalRead(switch_waterPump) == LOW)
+          {
+            digitalWrite(relay1_waterPump, HIGH);
+            state1_waterPump = true;
+          }
+          else
+          {
+            digitalWrite(relay1_waterPump, LOW);
+            state1_waterPump = false;
+          }
+          // LampuFertilizer
+          if (digitalRead(switch_lampuFertilizer) == LOW)
+          {
+            digitalWrite(relay2_lampuFertilizer, HIGH);
+            state2_lampuFertilizer = true;
+          }
+          else
+          {
+            digitalWrite(relay2_lampuFertilizer, LOW);
+            state2_lampuFertilizer = false;
+          }
+        }
+        else if (digitalRead(switch_pin) == LOW && flag == false)
+        {
+          flag = false;
+          if (state1_waterPump == true)
+            state1_waterPump = false;
+          digitalWrite(relay1_waterPump, LOW);
+          if (state2_lampuFertilizer == true)
+            state2_lampuFertilizer = false;
+          digitalWrite(relay2_lampuFertilizer, LOW);
+          // stop current code here
+          // execute main code here
+
+          state1_waterPump = !state1_waterPump;
+          digitalWrite(relay1_waterPump, state1_waterPump);
+          // state2_lampuFertilizer = !state2_lampuFertilizer;
+          // digitalWrite(relay2_lampuFertilizer, state2_lampuFertilizer);
+        }
+
+        // state1_waterPump = !state1_waterPump;
+        // digitalWrite(relay1_waterPump, state1_waterPump);
 
         // state2_lampuFertilizer = !state2_lampuFertilizer;
         // digitalWrite(relay2_lampuFertilizer, state2_lampuFertilizer);
@@ -232,8 +286,52 @@ void handleNewMessages(int numNewMessages)
         // state1_waterPump = !state1_waterPump;
         // digitalWrite(relay1_waterPump, state1_waterPump);
 
-        state2_lampuFertilizer = !state2_lampuFertilizer;
-        digitalWrite(relay2_lampuFertilizer, state2_lampuFertilizer);
+        bool flag = false;
+        if (digitalRead(switch_pin) == HIGH)
+        {
+          flag = true;
+          if (digitalRead(switch_waterPump) == LOW)
+          {
+            digitalWrite(relay1_waterPump, HIGH);
+            state1_waterPump = true;
+          }
+          else
+          {
+            digitalWrite(relay1_waterPump, LOW);
+            state1_waterPump = false;
+          }
+          // LampuFertilizer
+          if (digitalRead(switch_lampuFertilizer) == LOW)
+          {
+            digitalWrite(relay2_lampuFertilizer, HIGH);
+            state2_lampuFertilizer = true;
+          }
+          else
+          {
+            digitalWrite(relay2_lampuFertilizer, LOW);
+            state2_lampuFertilizer = false;
+          }
+        }
+        else if (digitalRead(switch_pin) == LOW && flag == false)
+        {
+          flag = false;
+          if (state1_waterPump == true)
+            state1_waterPump = false;
+          digitalWrite(relay1_waterPump, LOW);
+          if (state2_lampuFertilizer == true)
+            state2_lampuFertilizer = false;
+          digitalWrite(relay2_lampuFertilizer, LOW);
+          // stop current code here
+          // execute main code here
+
+          // state1_waterPump = !state1_waterPump;
+          // digitalWrite(relay1_waterPump, state1_waterPump);
+          state2_lampuFertilizer = !state2_lampuFertilizer;
+          digitalWrite(relay2_lampuFertilizer, state2_lampuFertilizer);
+        }
+
+        // state2_lampuFertilizer = !state2_lampuFertilizer;
+        // digitalWrite(relay2_lampuFertilizer, state2_lampuFertilizer);
 
         // Now we can UPDATE the message, lets prepare it for sending:
         msg = "Hi " + from_name + "!\n";
@@ -287,7 +385,7 @@ void handleNewMessages(int numNewMessages)
         bot.sendMessageWithInlineKeyboard(chat_id, msg, "Markdown", keyboardJson);
       }
 
-      if (text == "/setup@bsfcontrol_bot")
+      if (text == "/schedule@bsfcontrol_bot")
       {
         // lets create a friendly welcome message
         // msg = "Hi " + from_name + "!\n";
@@ -391,7 +489,7 @@ void bot_setup()
                             // Manual Switch On / Off actuator
                             "{\"command\":\"switch\", \"description\":\"Saklar digital aktuator scr manual\"},"
                             // Auto setup with provided timeInput data
-                            "{\"command\":\"setup\", \"description\":\"Setup penjadwalan otomatis\"}" // no comma on last command
+                            "{\"command\":\"schedule\", \"description\":\"Penjadwalan otomatis aktuator\"}" // no comma on last command
                             // Setmode for actuators to work auto with timeInput or manually
                             //"{\"command\":\"setmode\", \"description\":\"Setup esp32 manual atau auto\"},"
                             // "{\"command\":\"led_on\", \"description\":\"turn led on\"},"
@@ -425,7 +523,11 @@ void setup()
   pinMode(relay1_waterPump, OUTPUT);
   pinMode(relay2_lampuFertilizer, OUTPUT);
   pinMode(relay3_solenoidValve, OUTPUT);
-  pinMode(relay4, OUTPUT);
+
+  // Setup Manual GPIO Switch
+  pinMode(switch_pin, INPUT_PULLUP);
+  pinMode(switch_waterPump, INPUT_PULLUP);
+  pinMode(switch_lampuFertilizer, INPUT_PULLUP);
 
   // attempt to connect to Wifi network:
   Serial.print("Connecting to Wifi SSID ");
@@ -460,6 +562,47 @@ void loop()
   // float f = dht.readTemperature(true);
   // Read light intensity
   float lux = lightMeter.readLightLevel();
+
+  // Control Manual GPIO Switch
+  bool flag = false;
+  if (digitalRead(switch_pin) == HIGH)
+  {
+    flag = true;
+    if (digitalRead(switch_waterPump) == LOW)
+    {
+      digitalWrite(relay1_waterPump, HIGH);
+      state1_waterPump = true;
+    }
+    else
+    {
+      digitalWrite(relay1_waterPump, LOW);
+      state1_waterPump = false;
+    }
+    // LampuFertilizer
+    if (digitalRead(switch_lampuFertilizer) == LOW)
+    {
+      digitalWrite(relay2_lampuFertilizer, HIGH);
+      state2_lampuFertilizer = true;
+    }
+    else
+    {
+      digitalWrite(relay2_lampuFertilizer, LOW);
+      state2_lampuFertilizer = false;
+    }
+  }
+  else if (digitalRead(switch_pin) == LOW && flag == false)
+  {
+    flag = false;
+    if (state1_waterPump == true)
+    state1_waterPump = false;
+    digitalWrite(relay1_waterPump, LOW);
+    if (state2_lampuFertilizer == true)
+    state2_lampuFertilizer = false;
+    digitalWrite(relay2_lampuFertilizer, LOW);
+    // stop current code here
+    // execute main code here
+  }
+
   // Define the lowState and highState variables
   String lowState = "off";
   String highState = "on";
@@ -468,21 +611,21 @@ void loop()
   String waterPumpState = state1_waterPump == LOW ? lowState : highState;
   String lampuFertilizerState = state2_lampuFertilizer == LOW ? lowState : highState;
 
- // LCD 20X4 CHAR SHORT DATETIME OUTPUT
- 
-    struct tm timeinfo;
-    if (!getLocalTime(&timeinfo))
-    {
-      Serial.println("Failed to obtain time");
-      return;
+  // LCD 20X4 CHAR SHORT DATETIME OUTPUT
+
+  struct tm timeinfo;
+  if (!getLocalTime(&timeinfo))
+  {
+    Serial.println("Failed to obtain time");
+    return;
     }
 
     char formattedDate[7];
     strftime(formattedDate, sizeof(formattedDate), "%d %b", &timeinfo);
-    Serial.println(formattedDate);
+    // Serial.println(formattedDate);
     char formattedTime[6];
     strftime(formattedTime, sizeof(formattedTime), "%H:%M", &timeinfo);
-    Serial.println(formattedTime);
+    // Serial.println(formattedTime);
 
     // Print the sensor data on the LCD display
     lcd.clear();
