@@ -149,6 +149,10 @@ bool state1_waterPump = LOW;
 bool state2_lampuFertilizer = LOW;
 bool state3_solenoidValve = LOW;
 
+unsigned long sensorStartTime;
+unsigned long sensorDelay = 1250; // delay for 1250 milliseconds
+
+
 // test state using builtin led esp32
 // const int ledPin = 2;
 // bool ledState = LOW;
@@ -204,53 +208,8 @@ void handleNewMessages(int numNewMessages)
         // ledState = !ledState;
         // digitalWrite(ledPin, ledState);
 
-        // Control Manual GPIO Switch
-        bool flag = false;
-        if (digitalRead(switch_pin) == HIGH)
-        {
-          flag = true;
-          if (digitalRead(switch_waterPump) == LOW)
-          {
-            digitalWrite(relay1_waterPump, HIGH);
-            state1_waterPump = true;
-          }
-          else
-          {
-            digitalWrite(relay1_waterPump, LOW);
-            state1_waterPump = false;
-          }
-          // LampuFertilizer
-          if (digitalRead(switch_lampuFertilizer) == LOW)
-          {
-            digitalWrite(relay2_lampuFertilizer, HIGH);
-            state2_lampuFertilizer = true;
-          }
-          else
-          {
-            digitalWrite(relay2_lampuFertilizer, LOW);
-            state2_lampuFertilizer = false;
-          }
-        }
-        else if (digitalRead(switch_pin) == LOW && flag == false)
-        {
-          flag = false;
-          if (state1_waterPump == true)
-            state1_waterPump = false;
-          digitalWrite(relay1_waterPump, LOW);
-          if (state2_lampuFertilizer == true)
-            state2_lampuFertilizer = false;
-          digitalWrite(relay2_lampuFertilizer, LOW);
-          // stop current code here
-          // execute main code here
-
-          state1_waterPump = !state1_waterPump;
-          digitalWrite(relay1_waterPump, state1_waterPump);
-          // state2_lampuFertilizer = !state2_lampuFertilizer;
-          // digitalWrite(relay2_lampuFertilizer, state2_lampuFertilizer);
-        }
-
-        // state1_waterPump = !state1_waterPump;
-        // digitalWrite(relay1_waterPump, state1_waterPump);
+        state1_waterPump = !state1_waterPump;
+        digitalWrite(relay1_waterPump, state1_waterPump);
 
         // state2_lampuFertilizer = !state2_lampuFertilizer;
         // digitalWrite(relay2_lampuFertilizer, state2_lampuFertilizer);
@@ -286,52 +245,8 @@ void handleNewMessages(int numNewMessages)
         // state1_waterPump = !state1_waterPump;
         // digitalWrite(relay1_waterPump, state1_waterPump);
 
-        bool flag = false;
-        if (digitalRead(switch_pin) == HIGH)
-        {
-          flag = true;
-          if (digitalRead(switch_waterPump) == LOW)
-          {
-            digitalWrite(relay1_waterPump, HIGH);
-            state1_waterPump = true;
-          }
-          else
-          {
-            digitalWrite(relay1_waterPump, LOW);
-            state1_waterPump = false;
-          }
-          // LampuFertilizer
-          if (digitalRead(switch_lampuFertilizer) == LOW)
-          {
-            digitalWrite(relay2_lampuFertilizer, HIGH);
-            state2_lampuFertilizer = true;
-          }
-          else
-          {
-            digitalWrite(relay2_lampuFertilizer, LOW);
-            state2_lampuFertilizer = false;
-          }
-        }
-        else if (digitalRead(switch_pin) == LOW && flag == false)
-        {
-          flag = false;
-          if (state1_waterPump == true)
-            state1_waterPump = false;
-          digitalWrite(relay1_waterPump, LOW);
-          if (state2_lampuFertilizer == true)
-            state2_lampuFertilizer = false;
-          digitalWrite(relay2_lampuFertilizer, LOW);
-          // stop current code here
-          // execute main code here
-
-          // state1_waterPump = !state1_waterPump;
-          // digitalWrite(relay1_waterPump, state1_waterPump);
-          state2_lampuFertilizer = !state2_lampuFertilizer;
-          digitalWrite(relay2_lampuFertilizer, state2_lampuFertilizer);
-        }
-
-        // state2_lampuFertilizer = !state2_lampuFertilizer;
-        // digitalWrite(relay2_lampuFertilizer, state2_lampuFertilizer);
+        state2_lampuFertilizer = !state2_lampuFertilizer;
+        digitalWrite(relay2_lampuFertilizer, state2_lampuFertilizer);
 
         // Now we can UPDATE the message, lets prepare it for sending:
         msg = "Hi " + from_name + "!\n";
@@ -553,6 +468,8 @@ void setup()
 
 void loop()
 {
+  // get current time
+  sensorStartTime = millis();
   // Reading temperature or humidity takes about 250 milliseconds!
   // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
   // Read temperature as Celsius (the default)
@@ -562,6 +479,19 @@ void loop()
   // float f = dht.readTemperature(true);
   // Read light intensity
   float lux = lightMeter.readLightLevel();
+
+  if (isnan(humidity) || isnan(temperature) /* || isnan(f) */)
+  {
+    Serial.println(F("Failed to read from DHT sensor!"));
+    return;
+  }
+
+  // check time difference and delay if necessary
+  unsigned long sensorEndTime = millis();
+  if (sensorEndTime - sensorStartTime < sensorDelay)
+  {
+    delay(sensorDelay - (sensorEndTime - sensorStartTime));
+  }
 
   // Control Manual GPIO Switch
   bool flag = false;
@@ -593,12 +523,12 @@ void loop()
   else if (digitalRead(switch_pin) == LOW && flag == false)
   {
     flag = false;
-    if (state1_waterPump == true)
-    state1_waterPump = false;
-    digitalWrite(relay1_waterPump, LOW);
-    if (state2_lampuFertilizer == true)
-    state2_lampuFertilizer = false;
-    digitalWrite(relay2_lampuFertilizer, LOW);
+    // if (state1_waterPump == true)
+    // state1_waterPump = false;
+    // digitalWrite(relay1_waterPump, LOW);
+    // if (state2_lampuFertilizer == true)
+    // state2_lampuFertilizer = false;
+    // digitalWrite(relay2_lampuFertilizer, LOW);
     // stop current code here
     // execute main code here
   }
@@ -618,56 +548,49 @@ void loop()
   {
     Serial.println("Failed to obtain time");
     return;
-    }
-
-    char formattedDate[7];
-    strftime(formattedDate, sizeof(formattedDate), "%d %b", &timeinfo);
-    // Serial.println(formattedDate);
-    char formattedTime[6];
-    strftime(formattedTime, sizeof(formattedTime), "%H:%M", &timeinfo);
-    // Serial.println(formattedTime);
-
-    // Print the sensor data on the LCD display
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("Temp: ");
-    lcd.print(temperature);
-    lcd.print(" C ");
-    lcd.print(formattedDate);
-    lcd.setCursor(0, 1);
-    lcd.print("Humi: ");
-    lcd.print(humidity);
-    lcd.print(" % ");
-    lcd.print(formattedTime);
-    lcd.setCursor(0, 2);
-    lcd.print("Lux : ");
-    lcd.print(lux);
-    lcd.print(" lx");
-    lcd.setCursor(0, 3);
-    lcd.print("Pump: ");
-    lcd.print(waterPumpState);
-    lcd.print(" Lamp: ");
-    lcd.print(lampuFertilizerState);
-    printLocalTime();
-    delay(1000);
-
-    if (isnan(humidity) || isnan(temperature) /* || isnan(f) */)
-    {
-      Serial.println(F("Failed to read from DHT sensor!"));
-      return;
-    }
-
-    if (millis() - bot_lasttime > BOT_MTBS)
-    {
-      int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
-
-      while (numNewMessages)
-      {
-        Serial.println("got response");
-        handleNewMessages(numNewMessages);
-        numNewMessages = bot.getUpdates(bot.last_message_received + 1);
-      }
-
-      bot_lasttime = millis();
-    }
   }
+
+  char formattedDate[7];
+  strftime(formattedDate, sizeof(formattedDate), "%d %b", &timeinfo);
+  // Serial.println(formattedDate);
+  char formattedTime[6];
+  strftime(formattedTime, sizeof(formattedTime), "%H:%M", &timeinfo);
+  // Serial.println(formattedTime);
+
+  // Print the sensor data on the LCD display
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Temp: ");
+  lcd.print(temperature);
+  lcd.print(" C ");
+  lcd.print(formattedDate);
+  lcd.setCursor(0, 1);
+  lcd.print("Humi: ");
+  lcd.print(humidity);
+  lcd.print(" % ");
+  lcd.print(formattedTime);
+  lcd.setCursor(0, 2);
+  lcd.print("Lux : ");
+  lcd.print(lux);
+  lcd.print(" lx");
+  lcd.setCursor(0, 3);
+  lcd.print("Pump: ");
+  lcd.print(waterPumpState);
+  lcd.print(" Lamp: ");
+  lcd.print(lampuFertilizerState);
+  printLocalTime();
+
+  if (millis() - bot_lasttime > BOT_MTBS)
+  {
+    int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
+
+    while (numNewMessages)
+    {
+      Serial.println("got response");
+      handleNewMessages(numNewMessages);
+      numNewMessages = bot.getUpdates(bot.last_message_received + 1);
+    }
+
+    bot_lasttime = millis();
+  }
+}
