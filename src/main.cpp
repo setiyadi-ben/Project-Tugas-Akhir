@@ -55,14 +55,118 @@ const int daylightOffset_sec = 3600;
 
   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-#define BOT_TOKEN "5935516261:AAEQApSV3YAfcGkdDzwi13YwcQNMWIJ_3xg"
+#define BOT_TOKEN "5935516261:AAE6L6-DRUcqIiR7MUOmNQwtCm_LToXObn0"
 // Using CHAT_ID to lock user that can access your bot outside the Group,
 // get the id on @RawDataBot
 #define CHAT_ID "-1001825459630"
 const unsigned long BOT_MTBS = 1000; // mean time between scan messages
 unsigned long bot_lasttime;          // last time messages' scan has been done
 WiFiClientSecure secured_client;
+// const char* host = "api.telegram.org";
+const char* host = "149.154.167.220";
+const int httpsPort = 443;
+// Cert using to perform SSL connection to api.telegram.org update if it expires
+const char rootCA[] = R"=EOF=(
+-----BEGIN CERTIFICATE-----
+MIIGkDCCBXigAwIBAgIISiBgk2h4nDYwDQYJKoZIhvcNAQELBQAwgbQxCzAJBgNV
+BAYTAlVTMRAwDgYDVQQIEwdBcml6b25hMRMwEQYDVQQHEwpTY290dHNkYWxlMRow
+GAYDVQQKExFHb0RhZGR5LmNvbSwgSW5jLjEtMCsGA1UECxMkaHR0cDovL2NlcnRz
+LmdvZGFkZHkuY29tL3JlcG9zaXRvcnkvMTMwMQYDVQQDEypHbyBEYWRkeSBTZWN1
+cmUgQ2VydGlmaWNhdGUgQXV0aG9yaXR5IC0gRzIwHhcNMjIwODEwMTU1NjI4WhcN
+MjMwOTExMTU1NjI4WjAZMRcwFQYDVQQDDA4qLnRlbGVncmFtLm9yZzCCASIwDQYJ
+KoZIhvcNAQEBBQADggEPADCCAQoCggEBAKpIH/5PVT0RqF5iuaLJdPSSPQ/Zv4bb
+3vRlAAN99rtR9/diw4JV2QsnVmReHY111XoEjUeKhjuB+ETlh/VGO/NXNPcPn/J2
+LCtyMvOM1SDkwAJ2RGzN6Tj1Un9QHdtZ5yQqTk34p/dp4TnjkbcFGdZxNt2fXS68
+FmE0j5KqmO4ygBcwymwzJr10750H9o9E/d2Q5q4/9fHEYSyTLJEbiuSb/3QI3Wq8
+rjABm/OfINdik3Uo1tcKO3ROEgNEWdP581pBHvqDgCjLfjt6OFDDyrttUHVhIATm
+1EsHIhqG5VUbSbLJlsP3PQAnngqbILMw6DyvfLm2sc9vyQXDyZfYBe0CAwEAAaOC
+Az4wggM6MAwGA1UdEwEB/wQCMAAwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUF
+BwMCMA4GA1UdDwEB/wQEAwIFoDA4BgNVHR8EMTAvMC2gK6AphidodHRwOi8vY3Js
+LmdvZGFkZHkuY29tL2dkaWcyczEtNDM2Ni5jcmwwXQYDVR0gBFYwVDBIBgtghkgB
+hv1tAQcXATA5MDcGCCsGAQUFBwIBFitodHRwOi8vY2VydGlmaWNhdGVzLmdvZGFk
+ZHkuY29tL3JlcG9zaXRvcnkvMAgGBmeBDAECATB2BggrBgEFBQcBAQRqMGgwJAYI
+KwYBBQUHMAGGGGh0dHA6Ly9vY3NwLmdvZGFkZHkuY29tLzBABggrBgEFBQcwAoY0
+aHR0cDovL2NlcnRpZmljYXRlcy5nb2RhZGR5LmNvbS9yZXBvc2l0b3J5L2dkaWcy
+LmNydDAfBgNVHSMEGDAWgBRAwr0njsw0gzCiM9f7bLPwtCyAzjAnBgNVHREEIDAe
+gg4qLnRlbGVncmFtLm9yZ4IMdGVsZWdyYW0ub3JnMB0GA1UdDgQWBBRqvbbCZElv
+0pbnIM/DHudY2bUlfjCCAX8GCisGAQQB1nkCBAIEggFvBIIBawFpAHYA6D7Q2j71
+BjUy51covIlryQPTy9ERa+zraeF3fW0GvW4AAAGCiHjKNwAABAMARzBFAiEAm5J/
+LyrHaw+COLjPjSay0jgKCQRJ6zjYJhbvJt0aDcACIFka+9S/RP0xJPxT/TJ90qDv
+2jNyWtJt/+Cz75j2ImUGAHYANc8ZG7+xbFe/D61MbULLu7YnICZR6j/hKu+oA8M7
+1kwAAAGCiHjL0QAABAMARzBFAiA2KJz6YIAsKEoezBC8c1ENpEAPrurLk8xJlFjt
+Vms8IwIhAMCI1cxKpfqzlqzA4Wu4Du16pqP4U1Y4n5utSkwAe2lGAHcAejKMVNi3
+LbYg6jjgUh7phBZwMhOFTTvSK8E6V6NS61IAAAGCiHjMhgAABAMASDBGAiEA+TOM
+1gB0ORXEr1UA04LGc7jv5iTR9tIBnTytaPgj/gICIQCgQnG0/e3TaAlw+/lFbgkG
+PLf8Wd2KiM+afOWTFjHJxDANBgkqhkiG9w0BAQsFAAOCAQEAfobLSLYPbUyFJzyM
+FH30eAiqI/TwNZ2p5b/IDiznAIBW8iv4VdWJTh/m61qR/RSThHEcybxg5oBg+I45
+2EdI3/Tc0hKakcOkOw1Vy2ulT6TpM+oMEq0acIpi7LKe8J59D8EXmmvPHGoHUu/5
++4skGktbS6xvFtSdnG5+tzQt3CO+KaCQ5o2arYOfBn0cZfzGUWkJjYqeUn/bkcnd
+ftP9KDjnUps+wOXs01g5cUcMv9+fx3bWw62R3+E97yHOt9cfcVVTfEOC9ji75q/2
+su6HY2jFAmRGHdZDPcsMYW6pl24vYxzYzrvAD3GH9on6ah9JTSLW2cHRzDPfUIWA
+06O1IQ==
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+MIIE0DCCA7igAwIBAgIBBzANBgkqhkiG9w0BAQsFADCBgzELMAkGA1UEBhMCVVMx
+EDAOBgNVBAgTB0FyaXpvbmExEzARBgNVBAcTClNjb3R0c2RhbGUxGjAYBgNVBAoT
+EUdvRGFkZHkuY29tLCBJbmMuMTEwLwYDVQQDEyhHbyBEYWRkeSBSb290IENlcnRp
+ZmljYXRlIEF1dGhvcml0eSAtIEcyMB4XDTExMDUwMzA3MDAwMFoXDTMxMDUwMzA3
+MDAwMFowgbQxCzAJBgNVBAYTAlVTMRAwDgYDVQQIEwdBcml6b25hMRMwEQYDVQQH
+EwpTY290dHNkYWxlMRowGAYDVQQKExFHb0RhZGR5LmNvbSwgSW5jLjEtMCsGA1UE
+CxMkaHR0cDovL2NlcnRzLmdvZGFkZHkuY29tL3JlcG9zaXRvcnkvMTMwMQYDVQQD
+EypHbyBEYWRkeSBTZWN1cmUgQ2VydGlmaWNhdGUgQXV0aG9yaXR5IC0gRzIwggEi
+MA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC54MsQ1K92vdSTYuswZLiBCGzD
+BNliF44v/z5lz4/OYuY8UhzaFkVLVat4a2ODYpDOD2lsmcgaFItMzEUz6ojcnqOv
+K/6AYZ15V8TPLvQ/MDxdR/yaFrzDN5ZBUY4RS1T4KL7QjL7wMDge87Am+GZHY23e
+cSZHjzhHU9FGHbTj3ADqRay9vHHZqm8A29vNMDp5T19MR/gd71vCxJ1gO7GyQ5HY
+pDNO6rPWJ0+tJYqlxvTV0KaudAVkV4i1RFXULSo6Pvi4vekyCgKUZMQWOlDxSq7n
+eTOvDCAHf+jfBDnCaQJsY1L6d8EbyHSHyLmTGFBUNUtpTrw700kuH9zB0lL7AgMB
+AAGjggEaMIIBFjAPBgNVHRMBAf8EBTADAQH/MA4GA1UdDwEB/wQEAwIBBjAdBgNV
+HQ4EFgQUQMK9J47MNIMwojPX+2yz8LQsgM4wHwYDVR0jBBgwFoAUOpqFBxBnKLbv
+9r0FQW4gwZTaD94wNAYIKwYBBQUHAQEEKDAmMCQGCCsGAQUFBzABhhhodHRwOi8v
+b2NzcC5nb2RhZGR5LmNvbS8wNQYDVR0fBC4wLDAqoCigJoYkaHR0cDovL2NybC5n
+b2RhZGR5LmNvbS9nZHJvb3QtZzIuY3JsMEYGA1UdIAQ/MD0wOwYEVR0gADAzMDEG
+CCsGAQUFBwIBFiVodHRwczovL2NlcnRzLmdvZGFkZHkuY29tL3JlcG9zaXRvcnkv
+MA0GCSqGSIb3DQEBCwUAA4IBAQAIfmyTEMg4uJapkEv/oV9PBO9sPpyIBslQj6Zz
+91cxG7685C/b+LrTW+C05+Z5Yg4MotdqY3MxtfWoSKQ7CC2iXZDXtHwlTxFWMMS2
+RJ17LJ3lXubvDGGqv+QqG+6EnriDfcFDzkSnE3ANkR/0yBOtg2DZ2HKocyQetawi
+DsoXiWJYRBuriSUBAA/NxBti21G00w9RKpv0vHP8ds42pM3Z2Czqrpv1KrKQ0U11
+GIo/ikGQI31bS/6kA1ibRrLDYGCD+H1QQc7CoZDDu+8CL9IVVO5EFdkKrqeKM+2x
+LXY2JtwE65/3YR8V3Idv7kaWKK2hJn0KCacuBKONvPi8BDAB
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+MIIDxTCCAq2gAwIBAgIBADANBgkqhkiG9w0BAQsFADCBgzELMAkGA1UEBhMCVVMx
+EDAOBgNVBAgTB0FyaXpvbmExEzARBgNVBAcTClNjb3R0c2RhbGUxGjAYBgNVBAoT
+EUdvRGFkZHkuY29tLCBJbmMuMTEwLwYDVQQDEyhHbyBEYWRkeSBSb290IENlcnRp
+ZmljYXRlIEF1dGhvcml0eSAtIEcyMB4XDTA5MDkwMTAwMDAwMFoXDTM3MTIzMTIz
+NTk1OVowgYMxCzAJBgNVBAYTAlVTMRAwDgYDVQQIEwdBcml6b25hMRMwEQYDVQQH
+EwpTY290dHNkYWxlMRowGAYDVQQKExFHb0RhZGR5LmNvbSwgSW5jLjExMC8GA1UE
+AxMoR28gRGFkZHkgUm9vdCBDZXJ0aWZpY2F0ZSBBdXRob3JpdHkgLSBHMjCCASIw
+DQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAL9xYgjx+lk09xvJGKP3gElY6SKD
+E6bFIEMBO4Tx5oVJnyfq9oQbTqC023CYxzIBsQU+B07u9PpPL1kwIuerGVZr4oAH
+/PMWdYA5UXvl+TW2dE6pjYIT5LY/qQOD+qK+ihVqf94Lw7YZFAXK6sOoBJQ7Rnwy
+DfMAZiLIjWltNowRGLfTshxgtDj6AozO091GB94KPutdfMh8+7ArU6SSYmlRJQVh
+GkSBjCypQ5Yj36w6gZoOKcUcqeldHraenjAKOc7xiID7S13MMuyFYkMlNAJWJwGR
+tDtwKj9useiciAF9n9T521NtYJ2/LOdYq7hfRvzOxBsDPAnrSTFcaUaz4EcCAwEA
+AaNCMEAwDwYDVR0TAQH/BAUwAwEB/zAOBgNVHQ8BAf8EBAMCAQYwHQYDVR0OBBYE
+FDqahQcQZyi27/a9BUFuIMGU2g/eMA0GCSqGSIb3DQEBCwUAA4IBAQCZ21151fmX
+WWcDYfF+OwYxdS2hII5PZYe096acvNjpL9DbWu7PdIxztDhC2gV7+AJ1uP2lsdeu
+9tfeE8tTEH6KRtGX+rcuKxGrkLAngPnon1rpN5+r5N9ss4UXnT3ZJE95kTXWXwTr
+gIOrmgIttRD02JDHBHNA7XIloKmf7J6raBKZV8aPEjoJpL1E/QYVN8Gb5DKj7Tjo
+2GTzLH4U/ALqn83/B2gX2yKQOC16jdFU8WnjXzPKej17CuPKf1855eJ1usV2GDPO
+LPAvTK33sefOT6jEm0pUBsV/fdUID+Ic/n4XuKxe9tQWskMJDE32p2u0mYRlynqI
+4uJEvlz36hz1
+-----END CERTIFICATE-----
+)=EOF=";
 UniversalTelegramBot bot(BOT_TOKEN, secured_client);
+// Defining time schedule for an actuator to work
+bool scheduleEnabled = true;
+unsigned long lastCheck;
+unsigned long sensorInterval = 1 * 60 * 1000; // 1 minute in milliseconds
+unsigned long onDuration1 = 15 * 1000; // 15 seconds in milliseconds
+unsigned long onDuration2 = 30 * 1000; // 30 seconds in milliseconds
+unsigned long offDuration = sensorInterval - onDuration1;
+unsigned long startTime = 8 * 60 * 60 * 1000; // 8am in milliseconds
+unsigned long endTime = 15 * 60 * 60 * 1000; // 15pm in milliseconds
 
 // Import lib sensor DHT11
 /*
@@ -152,9 +256,11 @@ bool state3_solenoidValve = LOW;
 unsigned long sensorStartTime;
 unsigned long sensorDelay = 1250; // delay for 1250 milliseconds
 
+unsigned long previousMillis = 0; // variable to store the last time the LCD was updated
+const long interval = 1000; // interval at which to update the LCD (1000ms = 1 second)
 
 // test state using builtin led esp32
-// const int ledPin = 2;
+const int ledPin = 2;
 // bool ledState = LOW;
 
 void printLocalTime()
@@ -215,8 +321,8 @@ void handleNewMessages(int numNewMessages)
         // digitalWrite(relay2_lampuFertilizer, state2_lampuFertilizer);
 
         // Now we can UPDATE the message, lets prepare it for sending:
-        msg = "Hi " + from_name + "!\n";
-        msg += "Notice how the LED state has changed!\n\n";
+        msg = "Halo " + from_name + ", perintah berhasil dijalankan.\n";
+        msg += "Jika gagal, silahkan tekan tombol reset pada panel box.\n\n";
         // msg += "Try it again, see the button has updated as well:\n\n";
 
         // Prepare the buttons
@@ -249,8 +355,8 @@ void handleNewMessages(int numNewMessages)
         digitalWrite(relay2_lampuFertilizer, state2_lampuFertilizer);
 
         // Now we can UPDATE the message, lets prepare it for sending:
-        msg = "Hi " + from_name + "!\n";
-        msg += "Notice how the LED state has changed!\n\n";
+        msg = "Halo " + from_name + ", perintah berhasil dijalankan.\n";
+        msg += "Jika gagal, silahkan tekan tombol reset pada panel box.\n\n";
         // msg += "Try it again, see the button has updated as well:\n\n";
 
         // Prepare the buttons
@@ -280,8 +386,8 @@ void handleNewMessages(int numNewMessages)
       {
         // lets create a friendly welcome message
         // msg = "Hi " + from_name + "!\n";
-        msg = "Menu ini adalah saklar/switch manual.\n\n";
-        msg += "Silahkan tekan tombol dibawah untuk mengendalikan aktuator:\n\n";
+        msg = "Berikut merupakan saklar digital untuk pompa dan lampu.\n\n";
+        msg += "Silahkan tekan tombol dibawah untuk mengendalikan kondisi perangkat.\n\n";
 
         String keyboardJson = "["; // start Json
         // updateInlineKeyboard for waterPump
@@ -351,11 +457,17 @@ void handleNewMessages(int numNewMessages)
       // if (msg.text == "/setup@bsfcontrol_bot")
       //   answer = "===========================";
       if (msg.text == "/help@bsfcontrol_bot")
-        answer = "So, you need _help_, uh? me too! use /start or /status and /print";
+        answer = "Berikut fungsi dari setiap _perintah_ yang tersedia:"
+                 "\n"
+                 "- _/help_ Menu bantuan perintah telegram bot.""\n"
+                 "- _/start_ Menginisialisasi perangkat.""\n"
+                 "- _/print_ Mencetak output status aktuator dan pembacaan sensor dari ESP32.""\n"
+                 "- _/switch_ Saklar digital untuk pompa dan lampu.""\n"
+                 "- _/schedule_ Saklar digital dengan waktu penjadwalan otomatis.""\n";
       // if (msg.text == "/switch@bsfcontrol_bot")
       //   answer = "----------------------------";
-      // if (msg.text == "/start")
-      // answer = "Welcome my new friend! You are the first *" + msg.from_name + "* I've ever met";
+      if (msg.text == "/start@bsfcontrol_bot")
+      answer = "Selamat Datang di  *" + msg.from_name + "* I've ever met";
       if (msg.text == "/print@bsfcontrol_bot")
       {
 
@@ -431,7 +543,7 @@ void setup()
   lcd.backlight();
 
   // define builtin led
-  // pinMode(ledPin, OUTPUT);
+  pinMode(ledPin, OUTPUT);
   // digitalWrite(ledPin, ledState);
 
   // Setup Relay Pin as OUTPUT
@@ -448,7 +560,14 @@ void setup()
   Serial.print("Connecting to Wifi SSID ");
   Serial.print(WIFI_SSID);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  secured_client.setCACert(TELEGRAM_CERTIFICATE_ROOT); // Add root certificate for api.telegram.org
+  // secured_client.setCACert(TELEGRAM_CERTIFICATE_ROOT); // Add root certificate for api.telegram.org
+  secured_client.setCACert(rootCA);
+  if (secured_client.connect(host, httpsPort)) {
+    Serial.println("SSL Connection established");
+  } else {
+    Serial.println("SSL Connection failed");
+  }
+  secured_client.setInsecure();
   while (WiFi.status() != WL_CONNECTED)
   {
     Serial.print(".");
@@ -459,38 +578,29 @@ void setup()
   // Print ESP32 Local IP Address
   Serial.println(WiFi.localIP());
 
+  // Telegram Bot Setup from Library
+  bot_setup();
+
   // Init and get the time
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
   printLocalTime();
-
-  bot_setup();
 }
 
 void loop()
 {
-  // get current time
-  sensorStartTime = millis();
-  // Reading temperature or humidity takes about 250 milliseconds!
-  // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
-  // Read temperature as Celsius (the default)
-  float temperature = dht.readTemperature();
-  float humidity = dht.readHumidity();
-  // Read temperature as Fahrenheit (isFahrenheit = true)
-  // float f = dht.readTemperature(true);
-  // Read light intensity
-  float lux = lightMeter.readLightLevel();
-
-  if (isnan(humidity) || isnan(temperature) /* || isnan(f) */)
+  //  Control & Monitoring Switch using Tekegram Bot
+  if (millis() - bot_lasttime > BOT_MTBS)
   {
-    Serial.println(F("Failed to read from DHT sensor!"));
-    return;
-  }
+    int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
 
-  // check time difference and delay if necessary
-  unsigned long sensorEndTime = millis();
-  if (sensorEndTime - sensorStartTime < sensorDelay)
-  {
-    delay(sensorDelay - (sensorEndTime - sensorStartTime));
+    while (numNewMessages)
+    {
+      Serial.println("got response");
+      handleNewMessages(numNewMessages);
+      numNewMessages = bot.getUpdates(bot.last_message_received + 1);
+    }
+
+    bot_lasttime = millis();
   }
 
   // Control Manual GPIO Switch
@@ -522,16 +632,23 @@ void loop()
   }
   else if (digitalRead(switch_pin) == LOW && flag == false)
   {
-    flag = false;
-    // if (state1_waterPump == true)
-    // state1_waterPump = false;
-    // digitalWrite(relay1_waterPump, LOW);
-    // if (state2_lampuFertilizer == true)
-    // state2_lampuFertilizer = false;
-    // digitalWrite(relay2_lampuFertilizer, LOW);
+    // flag = false;
     // stop current code here
-    // execute main code here
   }
+
+  // get current time
+  struct tm timeinfo;
+  if (!getLocalTime(&timeinfo))
+  {
+    Serial.println("Failed to obtain time");
+    return;
+  }
+  char formattedDate[7];
+  strftime(formattedDate, sizeof(formattedDate), "%d %b", &timeinfo);
+  // Serial.println(formattedDate);
+  char formattedTime[6];
+  strftime(formattedTime, sizeof(formattedTime), "%H:%M", &timeinfo);
+  // Serial.println(formattedTime);
 
   // Define the lowState and highState variables
   String lowState = "off";
@@ -541,21 +658,18 @@ void loop()
   String waterPumpState = state1_waterPump == LOW ? lowState : highState;
   String lampuFertilizerState = state2_lampuFertilizer == LOW ? lowState : highState;
 
-  // LCD 20X4 CHAR SHORT DATETIME OUTPUT
 
-  struct tm timeinfo;
-  if (!getLocalTime(&timeinfo))
-  {
-    Serial.println("Failed to obtain time");
-    return;
-  }
-
-  char formattedDate[7];
-  strftime(formattedDate, sizeof(formattedDate), "%d %b", &timeinfo);
-  // Serial.println(formattedDate);
-  char formattedTime[6];
-  strftime(formattedTime, sizeof(formattedTime), "%H:%M", &timeinfo);
-  // Serial.println(formattedTime);
+  sensorStartTime = millis();
+  // check time difference and delay if necessary
+  // Reading temperature or humidity takes about 250 milliseconds!
+  // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+  // Read temperature as Celsius (the default)
+  float temperature = dht.readTemperature();
+  float humidity = dht.readHumidity();
+  // Read temperature as Fahrenheit (isFahrenheit = true)
+  // float f = dht.readTemperature(true);
+  // Read light intensity
+  float lux = lightMeter.readLightLevel();
 
   // Print the sensor data on the LCD display
   lcd.clear();
@@ -564,33 +678,32 @@ void loop()
   lcd.print(temperature);
   lcd.print(" C ");
   lcd.print(formattedDate);
+
   lcd.setCursor(0, 1);
   lcd.print("Humi: ");
   lcd.print(humidity);
   lcd.print(" % ");
   lcd.print(formattedTime);
+
   lcd.setCursor(0, 2);
   lcd.print("Lux : ");
   lcd.print(lux);
   lcd.print(" lx");
+
   lcd.setCursor(0, 3);
   lcd.print("Pump: ");
   lcd.print(waterPumpState);
   lcd.print(" Lamp: ");
   lcd.print(lampuFertilizerState);
-  printLocalTime();
 
-  if (millis() - bot_lasttime > BOT_MTBS)
+  unsigned long sensorEndTime = millis();
+  if (sensorEndTime - sensorStartTime < sensorDelay)
   {
-    int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
-
-    while (numNewMessages)
-    {
-      Serial.println("got response");
-      handleNewMessages(numNewMessages);
-      numNewMessages = bot.getUpdates(bot.last_message_received + 1);
-    }
-
-    bot_lasttime = millis();
+    delay(sensorDelay - (sensorEndTime - sensorStartTime));
+  }
+  if (isnan(humidity) || isnan(temperature) /* || isnan(f) */)
+  {
+    Serial.println(F("Failed to read from DHT sensor!"));
+    return;
   }
 }
