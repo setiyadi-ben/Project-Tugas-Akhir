@@ -34,7 +34,7 @@
   copies or substantial portions of the Software.
 */
 #include "time.h"
-const char *ntpServer = "pool.ntp.org";
+const char *ntpServer = "time.google.com";
 const long gmtOffset_sec = 25200; // GMT+7 timezone
 const int daylightOffset_sec = 3600;
 
@@ -62,9 +62,6 @@ const int daylightOffset_sec = 3600;
 const unsigned long BOT_MTBS = 1000; // mean time between scan messages
 unsigned long bot_lasttime;          // last time messages' scan has been done
 WiFiClientSecure secured_client;
-// const char* host = "api.telegram.org";
-const char* host = "149.154.167.220";
-const int httpsPort = 443;
 // Cert using to perform SSL connection to api.telegram.org update if it expires
 const char rootCA[] = R"=EOF=(
 -----BEGIN CERTIFICATE-----
@@ -160,13 +157,14 @@ LPAvTK33sefOT6jEm0pUBsV/fdUID+Ic/n4XuKxe9tQWskMJDE32p2u0mYRlynqI
 UniversalTelegramBot bot(BOT_TOKEN, secured_client);
 // Defining time schedule for an actuator to work
 bool scheduleEnabled = true;
+bool scheduleEnabled2 = false; // for demo testing only
 unsigned long lastCheck;
 unsigned long sensorInterval = 1 * 60 * 1000; // 1 minute in milliseconds
 unsigned long onDuration1 = 15 * 1000; // 15 seconds in milliseconds
 unsigned long onDuration2 = 30 * 1000; // 30 seconds in milliseconds
 unsigned long offDuration = sensorInterval - onDuration1;
 unsigned long startTime = 8 * 60 * 60 * 1000; // 8am in milliseconds
-unsigned long endTime = 15 * 60 * 60 * 1000; // 15pm in milliseconds
+unsigned long endTime = 23 * 60 * 60 * 1000; // 15pm in milliseconds
 
 // Import lib sensor DHT11
 /*
@@ -236,10 +234,10 @@ LiquidCrystal_I2C lcd(0x27, 20, 4); // Address 0x27, 20 columns, 4 rows
   copies or substantial portions of the Software.
 */
 // relay pinout
-const int relay1_waterPump = 23;
+const int relay1_waterPump = 18;
 const int relay2_lampuFertilizer = 19;
 // unused relay
-#define relay3_solenoidValve 18
+#define relay3_solenoidValve 20
 
 
 // Manual switch from GPIO pin
@@ -308,6 +306,7 @@ void handleNewMessages(int numNewMessages)
       Serial.print("Data on the button: ");
       Serial.println(bot.messages[i].text);
 
+      // CALLBACK MANUAL SWITCH BUTTON
       if (text == "/switchButton1")
       {
         // Toggle the ledState and update the LED itself
@@ -376,6 +375,59 @@ void handleNewMessages(int numNewMessages)
         // Now send this message including the current message_id as the 5th input to UPDATE that message
         bot.sendMessageWithInlineKeyboard(chat_id, msg, "Markdown", keyboardJson, message_id);
       }
+
+      // CALLBACK SCHEDULED BUTTON
+      if (text == "/scheduleButton")
+      {
+        // Togle TRUE & FALSE statements
+        scheduleEnabled = !scheduleEnabled;
+
+        // Now we can UPDATE the message, lets prepare it for sending:
+        msg = "Halo " + from_name + ", perintah berhasil dijalankan.\n";
+        msg += "Jika gagal, silahkan tekan tombol reset pada panel box.\n\n";
+        // msg += "Try it again, see the button has updated as well:\n\n";
+
+        // Prepare the buttons
+        String keyboardJson = "["; // start Json
+        // updateInlineKeyboard
+        keyboardJson += "[{ \"text\" : \"08 AM to 01 PM is ";
+        keyboardJson += (scheduleEnabled ? "ON" : "OFF");
+        keyboardJson += "\", \"callback_data\" : \"/scheduleButton\" }]";
+        // updateInlineKeyboard
+        keyboardJson += ", [{ \"text\" : \"schedule example is ";
+        keyboardJson += (scheduleEnabled2 ? "ON" : "OFF");
+        keyboardJson += "\", \"callback_data\" : \"/scheduleButton2\" }]";
+        keyboardJson += "]"; // end Json
+
+        // Now send this message including the current message_id as the 5th input to UPDATE that message
+        bot.sendMessageWithInlineKeyboard(chat_id, msg, "Markdown", keyboardJson, message_id);
+      }
+
+      if (text == "/scheduleButton2")
+      {
+        // Togle TRUE & FALSE statements
+        scheduleEnabled2 = !scheduleEnabled2;
+
+        // Now we can UPDATE the message, lets prepare it for sending:
+        msg = "Halo " + from_name + ", perintah berhasil dijalankan.\n";
+        msg += "Jika gagal, silahkan tekan tombol reset pada panel box.\n\n";
+        // msg += "Try it again, see the button has updated as well:\n\n";
+
+        // Prepare the buttons
+        String keyboardJson = "["; // start Json
+        // updateInlineKeyboard
+        keyboardJson += "[{ \"text\" : \"08 AM to 01 PM is ";
+        keyboardJson += (scheduleEnabled ? "ON" : "OFF");
+        keyboardJson += "\", \"callback_data\" : \"/scheduleButton\" }]";
+        // updateInlineKeyboard
+        keyboardJson += ", [{ \"text\" : \"schedule example is ";
+        keyboardJson += (scheduleEnabled2 ? "ON" : "OFF");
+        keyboardJson += "\", \"callback_data\" : \"/scheduleButton2\" }]";
+        keyboardJson += "]"; // end Json
+
+        // Now send this message including the current message_id as the 5th input to UPDATE that message
+        bot.sendMessageWithInlineKeyboard(chat_id, msg, "Markdown", keyboardJson, message_id);
+      }
     }
 
     // 'Normal' messages are handled here
@@ -408,23 +460,22 @@ void handleNewMessages(int numNewMessages)
 
       if (text == "/schedule@bsfcontrol_bot")
       {
-        // lets create a friendly welcome message
-        // msg = "Hi " + from_name + "!\n";
-        msg = "Menu ini adalah saklar/switch otomatis.\n\n";
-        msg += "Silahkan tekan tombol dibawah untuk mengendalikan aktuator:\n\n";
+        // msg header
+        msg = "Berikut merupakan saklar digital dengan penjadwalan secara otomatis.\n\n";
+        msg += "Saklar beroperasi dengan parameter waktu dan intensitas cahaya yang ditentukan.\n\n";
 
+        // Prepare the buttons
         String keyboardJson = "["; // start Json
-        // updateInlineKeyboard for waterPump
-        keyboardJson += "[{ \"text\" : \"waterpump is ";
-        keyboardJson += (state1_waterPump ? "ON" : "OFF");
-        keyboardJson += "\", \"callback_data\" : \"/switchButton1\" }]";
-        // updateInlineKeyboard for lampuFertilizer
-        keyboardJson += ", [{ \"text\" : \"lampufertilizer is ";
-        keyboardJson += (state2_lampuFertilizer ? "ON" : "OFF");
-        keyboardJson += "\", \"callback_data\" : \"/switchButton2\" }]";
-        // keyboardJson += ", [{ \"text\" : \"Send message\", \"callback_data\" : \"/sendMessage\" }]";
-        // keyboardJson += ", [{ \"text\" : \"Go to Google\", \"url\" : \"https://www.google.com\" }]";
-        keyboardJson += "]"; // end Json                                                                                            // end of keyboard json
+        // updateInlineKeyboard
+        keyboardJson += "[{ \"text\" : \"08 AM to 01 PM is ";
+        keyboardJson += (scheduleEnabled ? "ON" : "OFF");
+        keyboardJson += "\", \"callback_data\" : \"/scheduleButton\" }]";
+        // updateInlineKeyboard
+        keyboardJson += ", [{ \"text\" : \"schedule example is ";
+        keyboardJson += (scheduleEnabled2 ? "ON" : "OFF");
+        keyboardJson += "\", \"callback_data\" : \"/scheduleButton2\" }]";
+        keyboardJson += "]"; // end Json
+
 
         // first time, send this message as a normal inline keyboard message:
         bot.sendMessageWithInlineKeyboard(chat_id, msg, "Markdown", keyboardJson);
@@ -556,19 +607,16 @@ void setup()
   pinMode(switch_waterPump, INPUT_PULLUP);
   pinMode(switch_lampuFertilizer, INPUT_PULLUP);
 
+  // Defining States to set on boot
+  digitalWrite(switch_pin, LOW);
+  digitalWrite(relay1_waterPump, state1_waterPump);
+  digitalWrite(relay2_lampuFertilizer, state2_lampuFertilizer);
+
   // attempt to connect to Wifi network:
   Serial.print("Connecting to Wifi SSID ");
   Serial.print(WIFI_SSID);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  // secured_client.setCACert(TELEGRAM_CERTIFICATE_ROOT); // Add root certificate for api.telegram.org
-  secured_client.setCACert(rootCA);
-  if (secured_client.connect(host, httpsPort)) {
-    Serial.println("SSL Connection established");
-  } else {
-    Serial.println("SSL Connection failed");
-  }
-  secured_client.setInsecure();
-  while (WiFi.status() != WL_CONNECTED)
+    while (WiFi.status() != WL_CONNECTED)
   {
     Serial.print(".");
     delay(500);
@@ -577,6 +625,11 @@ void setup()
   Serial.println(WiFi.localIP());
   // Print ESP32 Local IP Address
   Serial.println(WiFi.localIP());
+
+  // secured_client.setCACert(TELEGRAM_CERTIFICATE_ROOT); // Add root certificate for api.telegram.org
+  secured_client.setCACert(rootCA);
+  // secured_client.getPeerCertificate();
+  // secured_client.setInsecure();
 
   // Telegram Bot Setup from Library
   bot_setup();
@@ -593,6 +646,37 @@ void loop()
   {
     int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
 
+    if (scheduleEnabled2 && millis() - lastCheck > interval)
+      {
+        lastCheck = millis();
+        if (millis() >= startTime && millis() <= endTime)
+        {
+          digitalWrite(relay1_waterPump, HIGH);
+          delay(onDuration1);
+          digitalWrite(relay1_waterPump, LOW);
+          delay(offDuration);
+        }
+        else
+        {
+          // Turn on LampuFertilizer when the light intesity reduced & vice versa
+          float lux = lightMeter.readLightLevel();
+          if (lux < 50)
+          {
+            digitalWrite(relay2_lampuFertilizer, HIGH);
+            // delay(onDuration2);
+            // digitalWrite(relay2_lampuFertilizer, LOW);
+            // delay(interval - onDuration2);
+          }
+          else
+          {
+            // digitalWrite(relay2_lampuFertilizer, HIGH);
+            // delay(onDuration2);
+            digitalWrite(relay2_lampuFertilizer, LOW);
+            // delay(interval - onDuration2);
+          }
+        }
+      }
+
     while (numNewMessages)
     {
       Serial.println("got response");
@@ -603,9 +687,9 @@ void loop()
     bot_lasttime = millis();
   }
 
-  // Control Manual GPIO Switch
+   // Control Manual GPIO Switch
   bool flag = false;
-  if (digitalRead(switch_pin) == HIGH)
+  if (digitalRead(switch_pin) == LOW)
   {
     flag = true;
     if (digitalRead(switch_waterPump) == LOW)
@@ -630,7 +714,7 @@ void loop()
       state2_lampuFertilizer = false;
     }
   }
-  else if (digitalRead(switch_pin) == LOW && flag == false)
+  else if (digitalRead(switch_pin) == HIGH && flag == false)
   {
     // flag = false;
     // stop current code here
