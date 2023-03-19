@@ -19,6 +19,7 @@
 // Lib for communicating with ESP32 PlatformIO Framework
 #include <Arduino.h>
 #include <WiFi.h>
+#include <WiFiUdp.h>
 #include <WiFiClientSecure.h>
 #include <UniversalTelegramBot.h>
 
@@ -33,14 +34,26 @@
   The above copyright notice and this permission notice shall be included in all
   copies or substantial portions of the Software.
 */
+#include <NTPClient.h>
 #include "time.h"
-const char *ntpServer = "time.google.com";
+#include <TimeLib.h>
 const long gmtOffset_sec = 25200; // GMT+7 timezone
 const int daylightOffset_sec = 3600;
+const char *ntpServer = "time.google.com";
+const int ntpPort = 123;
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP, ntpServer, gmtOffset_sec, daylightOffset_sec);
+// void beginUDP() {
+//   ntpUDP.begin(ntpPort);
+// }
+
+// NTPClient timeClient(ntpUDP, ntpServer, gmtOffset_sec, daylightOffset_sec);
 
 // Wifi network station credentials
 #define WIFI_SSID "Ariaqi 3"
 #define WIFI_PASSWORD "lisa2218"
+// #define WIFI_SSID "Redmi 7"
+// #define WIFI_PASSWORD "11111111"
 
 // Telegram BOT Token (Get from Botfather)
 /*
@@ -155,16 +168,6 @@ LPAvTK33sefOT6jEm0pUBsV/fdUID+Ic/n4XuKxe9tQWskMJDE32p2u0mYRlynqI
 -----END CERTIFICATE-----
 )=EOF=";
 UniversalTelegramBot bot(BOT_TOKEN, secured_client);
-// Defining time schedule for an actuator to work
-bool scheduleEnabled = true;
-bool scheduleEnabled2 = false; // for demo testing only
-unsigned long lastCheck;
-unsigned long sensorInterval = 1 * 60 * 1000; // 1 minute in milliseconds
-unsigned long onDuration1 = 15 * 1000; // 15 seconds in milliseconds
-unsigned long onDuration2 = 30 * 1000; // 30 seconds in milliseconds
-unsigned long offDuration = sensorInterval - onDuration1;
-unsigned long startTime = 8 * 60 * 60 * 1000; // 8am in milliseconds
-unsigned long endTime = 23 * 60 * 60 * 1000; // 15pm in milliseconds
 
 // Import lib sensor DHT11
 /*
@@ -239,7 +242,6 @@ const int relay2_lampuFertilizer = 19;
 // unused relay
 #define relay3_solenoidValve 20
 
-
 // Manual switch from GPIO pin
 const int switch_pin = 5;
 #define switch_waterPump 13
@@ -255,56 +257,331 @@ unsigned long sensorStartTime;
 unsigned long sensorDelay = 1250; // delay for 1250 milliseconds
 
 unsigned long previousMillis = 0; // variable to store the last time the LCD was updated
-const long interval = 1000; // interval at which to update the LCD (1000ms = 1 second)
+const long interval = 1000;       // interval at which to update the LCD (1000ms = 1 second)
 
 // test state using builtin led esp32
 const int ledPin = 2;
 // bool ledState = LOW;
 
-void printLocalTime()
+// void printLocalTime()
+// {
+//   struct tm timeinfo;
+//   if (!getLocalTime(&timeinfo))
+//   {
+//     Serial.println("Failed to obtain time");
+//     return;
+//   }
+// }
+
+void bot_setup()
 {
-  struct tm timeinfo;
-  if (!getLocalTime(&timeinfo))
-  {
-    Serial.println("Failed to obtain time");
-    return;
-  }
+  const String commands = F("["
+                            /*
+                            Command format is customizeable with combination of lowercase and "_". Except that, it will not shown
+                            in telegram bot command "/" ex: "{\"command\":\"sensorVal\",  \"description\":\"Print nilai output sensor\"},"
+                            */
+                            "{\"command\":\"help\",  \"description\":\"Panduan penggunaan bot\"},"
+                            // Print sensor reading from DHT11, BH1750 and actuator state
+                            "{\"command\":\"print\", \"description\":\"Output status dari esp32\"},"
+                            // Manual Switch On / Off actuator
+                            "{\"command\":\"switch\", \"description\":\"Saklar digital aktuator scr manual\"},"
+                            // Auto setup with provided timeInput data
+                            "{\"command\":\"schedule\", \"description\":\"Penjadwalan otomatis aktuator\"}" // no comma on last command
+                            // Setmode for actuators to work auto with timeInput or manually
+                            //"{\"command\":\"setmode\", \"description\":\"Setup esp32 manual atau auto\"},"
+                            // "{\"command\":\"led_on\", \"description\":\"turn led on\"},"
+                            // "{\"command\":\"led_off\", \"description\":\"turn led off\"}" // no comma on last command
+                            "]");
+  bot.setMyCommands(commands);
+  // bot.sendMessage("25235518", "Hola amigo!", "Markdown");
 }
 
-void handleNewMessages(int numNewMessages)
+// void handleNewMessages(int numNewMessages)
+// {
+//   Serial.print("handleNewMessages ");
+//   Serial.println(numNewMessages);
+
+//   for (int i = 0; i < numNewMessages; i++)
+//   {
+//     // Chat id of the requester
+//     String chat_id = String(bot.messages[i].chat_id);
+//     if (chat_id != CHAT_ID)
+//     {
+//       bot.sendMessage(chat_id, "Unauthorized user", "");
+//       return;
+//     }
+//     // Get all the important data from the message
+//     int message_id = bot.messages[i].message_id;
+//     // String chat_id = String(bot.messages[i].chat_id);
+//     String text = bot.messages[i].text;
+//     String from_name = bot.messages[i].from_name;
+//     if (from_name == "")
+//       from_name = "Guest";
+//     String msg = ""; // init a message string to use
+
+//     // Output the message_id to give you feeling on how this example works
+//     Serial.print("Message id: ");
+//     Serial.println(message_id);
+
+//     // Inline buttons with callbacks when pressed will raise a callback_query message
+//     if (bot.messages[i].type == "callback_query")
+//     {
+//       Serial.print("Call back button pressed by: ");
+//       Serial.println(bot.messages[i].from_id);
+//       Serial.print("Data on the button: ");
+//       Serial.println(bot.messages[i].text);
+//     }
+//   }
+// }
+
+void setup()
 {
-  Serial.print("handleNewMessages ");
-  Serial.println(numNewMessages);
+  Serial.begin(9600);
+  // Initialize dht11 lib
+  dht.begin();
+  // Initialize the I2C bus (BH1750 library doesn't do this automatically)
+  Wire.begin();
+  // On esp8266 you can select SCL and SDA pins using Wire.begin(D4, D3);
+  // For Wemos / Lolin D1 Mini Pro and the Ambient Light shield use Wire.begin(D2, D1);
+  // Initialize bh1750 lib
+  lightMeter.begin();
+  Serial.println();
+  // Initialize the LCD display
+  lcd.begin(20, 4);
+  lcd.backlight();
 
-  for (int i = 0; i < numNewMessages; i++)
+  // define builtin led
+  pinMode(ledPin, OUTPUT);
+  // digitalWrite(ledPin, ledState);
+
+  // Setup Relay Pin as OUTPUT
+  pinMode(relay1_waterPump, OUTPUT);
+  pinMode(relay2_lampuFertilizer, OUTPUT);
+  pinMode(relay3_solenoidValve, OUTPUT);
+
+  // Setup Manual GPIO Switch
+  pinMode(switch_pin, INPUT_PULLUP);
+  pinMode(switch_waterPump, INPUT_PULLUP);
+  pinMode(switch_lampuFertilizer, INPUT_PULLUP);
+
+  // Defining States to set on boot
+  digitalWrite(switch_pin, LOW);
+  digitalWrite(relay1_waterPump, state1_waterPump);
+  digitalWrite(relay2_lampuFertilizer, state2_lampuFertilizer);
+
+  // attempt to connect to Wifi network:
+  Serial.print("Connecting to Wifi SSID ");
+  Serial.print(WIFI_SSID);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  while (WiFi.status() != WL_CONNECTED)
   {
-    // Chat id of the requester
-    String chat_id = String(bot.messages[i].chat_id);
-    if (chat_id != CHAT_ID)
-    {
-      bot.sendMessage(chat_id, "Unauthorized user", "");
-      return;
-    }
-    // Get all the important data from the message
-    int message_id = bot.messages[i].message_id;
-    // String chat_id = String(bot.messages[i].chat_id);
-    String text = bot.messages[i].text;
-    String from_name = bot.messages[i].from_name;
-    if (from_name == "")
-      from_name = "Guest";
-    String msg = ""; // init a message string to use
+    Serial.print(".");
+    delay(500);
+  }
+  Serial.print("\nWiFi connected.");
+  Serial.print("\nIP address: ");
+  // Print ESP32 Local IP Address
+  Serial.println(WiFi.localIP());
 
-    // Output the message_id to give you feeling on how this example works
-    Serial.print("Message id: ");
-    Serial.println(message_id);
+  // secured_client.setCACert(TELEGRAM_CERTIFICATE_ROOT); // Add root certificate for api.telegram.org
+  secured_client.setCACert(rootCA);
+  // secured_client.getPeerCertificate();
+  // secured_client.setInsecure();
 
-    // Inline buttons with callbacks when pressed will raise a callback_query message
-    if (bot.messages[i].type == "callback_query")
+  // Telegram Bot Setup from Library
+  bot_setup();
+  // handleNewMessages();
+
+  // Initialize and synchronize time with NTP
+  ntpUDP.begin(ntpPort);
+  timeClient.begin();
+  timeClient.setUpdateInterval(1000);
+  while (!timeClient.update())
+  {
+    timeClient.forceUpdate();
+  }
+
+  // Init and get the time
+  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+  // printLocalTime();
+}
+
+// Defining time schedule for an actuator to work
+bool scheduleEnabled = false;
+bool scheduleEnabled2 = false; // for demo testing only
+void loop()
+{
+  // Get current time
+  timeClient.update();
+  time_t now = timeClient.getEpochTime();
+  tm timeinfo = *localtime(&now); // Note that the localtime() function is used to convert the epoch time
+
+  //  Control & Monitoring Switch using Telegram Bot
+  if (millis() - bot_lasttime > BOT_MTBS)
+  {
+    int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
+
+    for (int i = 0; i < numNewMessages; i++)
     {
-      Serial.print("Call back button pressed by: ");
-      Serial.println(bot.messages[i].from_id);
-      Serial.print("Data on the button: ");
-      Serial.println(bot.messages[i].text);
+      // String chat_id = String(bot.messages[i].chat_id);
+      // String text = bot.messages[i].text;
+
+      // // Get all the important data from the message
+      // int message_id = bot.messages[i].message_id;
+      // String from_name = bot.messages[i].from_name;
+      // if (from_name == "")
+      //   from_name = "Guest";
+      // String msg = ""; // init a message string to use
+
+      // Chat id of the requester
+      String chat_id = String(bot.messages[i].chat_id);
+      if (chat_id != CHAT_ID)
+      {
+        bot.sendMessage(chat_id, "Unauthorized user", "");
+        return;
+      }
+      // Get all the important data from the message
+      int message_id = bot.messages[i].message_id;
+      // String chat_id = String(bot.messages[i].chat_id);
+      String text = bot.messages[i].text;
+      String from_name = bot.messages[i].from_name;
+      if (from_name == "")
+        from_name = "Guest";
+      String msg = ""; // init a message string to use
+
+      // Output the message_id to give you feeling on how this example works
+      Serial.print("Message id: ");
+      Serial.println(message_id);
+
+      // Inline buttons with callbacks when pressed will raise a callback_query message
+      if (bot.messages[i].type == "callback_query")
+      {
+        Serial.print("Call back button pressed by: ");
+        Serial.println(bot.messages[i].from_id);
+        Serial.print("Data on the button: ");
+        Serial.println(bot.messages[i].text);
+      }
+
+      if (text == "/switch@bsfcontrol_bot")
+      {
+        // lets create a friendly welcome message
+        // msg = "Hi " + from_name + "!\n";
+        msg = "Berikut merupakan saklar digital untuk pompa dan lampu.\n\n";
+        msg += "Silahkan tekan tombol dibawah untuk mengendalikan kondisi perangkat.\n\n";
+
+        String keyboardJson = "["; // start Json
+        // updateInlineKeyboard for waterPump
+        keyboardJson += "[{ \"text\" : \"waterpump is ";
+        keyboardJson += (state1_waterPump ? "ON" : "OFF");
+        keyboardJson += "\", \"callback_data\" : \"/switchButton1\" }]";
+        // updateInlineKeyboard for lampuFertilizer
+        keyboardJson += ", [{ \"text\" : \"lampufertilizer is ";
+        keyboardJson += (state2_lampuFertilizer ? "ON" : "OFF");
+        keyboardJson += "\", \"callback_data\" : \"/switchButton2\" }]";
+        // keyboardJson += ", [{ \"text\" : \"Send message\", \"callback_data\" : \"/sendMessage\" }]";
+        // keyboardJson += ", [{ \"text\" : \"Go to Google\", \"url\" : \"https://www.google.com\" }]";
+        keyboardJson += "]"; // end Json
+
+        // first time, send this message as a normal inline keyboard message:
+        bot.sendMessageWithInlineKeyboard(chat_id, msg, "Markdown", keyboardJson);
+      }
+
+      if (text == "/schedule@bsfcontrol_bot")
+      {
+        // msg header
+        msg = "Berikut merupakan saklar digital dengan penjadwalan secara otomatis.\n\n";
+        msg += "Saklar beroperasi dengan parameter waktu dan intensitas cahaya yang ditentukan.\n\n";
+
+        // Prepare the buttons
+        String keyboardJson = "["; // start Json
+        // updateInlineKeyboard
+        keyboardJson += "[{ \"text\" : \"08 AM to 01 PM is ";
+        keyboardJson += (scheduleEnabled ? "ON" : "OFF");
+        keyboardJson += "\", \"callback_data\" : \"/scheduleButton\" }]";
+        // updateInlineKeyboard
+        keyboardJson += ", [{ \"text\" : \"schedule example is ";
+        keyboardJson += (scheduleEnabled2 ? "ON" : "OFF");
+        keyboardJson += "\", \"callback_data\" : \"/scheduleButton2\" }]";
+        keyboardJson += "]"; // end Json
+
+        // first time, send this message as a normal inline keyboard message:
+        bot.sendMessageWithInlineKeyboard(chat_id, msg, "Markdown", keyboardJson);
+      }
+
+      // Reading temperature or humidity takes about 250 milliseconds!
+      // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+      // Read temperature as Celsius (the default)
+      float temperature = dht.readTemperature();
+      float humidity = dht.readHumidity();
+      // Read temperature as Fahrenheit (isFahrenheit = true)
+      // float f = dht.readTemperature(true);
+      // Compute value of light intensity
+      float lux = lightMeter.readLightLevel();
+      // Define the lowState and highState variables
+      String lowState = "idle";
+      String highState = "running";
+
+      // Get the state of the waterPump and lampuFertilizer variables as a string
+      String waterPumpState = state1_waterPump == LOW ? lowState : highState;
+      String lampuFertilizerState = state2_lampuFertilizer == LOW ? lowState : highState;
+
+      String answer;
+      for (int i = 0; i < numNewMessages; i++)
+      {
+        telegramMessage &msg = bot.messages[i];
+        Serial.println("Received " + msg.text);
+        // add @ to mention the bot in command message
+        // if (msg.text == "/setup@bsfcontrol_bot")
+        //   answer = "===========================";
+        if (msg.text == "/help@bsfcontrol_bot")
+          answer = "Berikut fungsi dari setiap _perintah_ yang tersedia:"
+                   "\n"
+                   "- _/help_ Menu bantuan perintah telegram bot."
+                   "\n"
+                   "- _/start_ Menginisialisasi perangkat."
+                   "\n"
+                   "- _/print_ Mencetak output status aktuator dan pembacaan sensor dari ESP32."
+                   "\n"
+                   "- _/switch_ Saklar digital untuk pompa dan lampu."
+                   "\n"
+                   "- _/schedule_ Saklar digital dengan waktu penjadwalan otomatis."
+                   "\n";
+        // if (msg.text == "/switch@bsfcontrol_bot")
+        //   answer = "----------------------------";
+        if (msg.text == "/start@bsfcontrol_bot")
+          answer = "Selamat Datang *" + msg.from_name + "*, bot online dan siap digunakan.";
+        if (msg.text == "/print@bsfcontrol_bot")
+        {
+
+          // Use the state variable in the answer variable
+          answer = "Berikut merupakan data monitoring dari hasil perhitungan :"
+                   "\n"
+                   "- Temp : " +
+                   String(temperature) + "°C\n" +
+                   "- Humi : " + String(humidity) + "%\n" +
+                   "- Lux : " + String(lux) + "lx\n" +
+                   "- waterPump : " + waterPumpState + "\n" +
+                   "- lampuFertilizer : " + lampuFertilizerState + "\n";
+        }
+        // example
+        // if (msg.text == "/led_on@bsfcontrol_bot")
+        // {
+        //   answer = "LED state set to ON";
+        //   ledState = HIGH;
+        //   digitalWrite(ledPin, ledState);
+        // }
+        // if (msg.text == "/led_off@bsfcontrol_bot")
+        // {
+        //   answer = "LED state set to OFF";
+        //   ledState = LOW;
+        //   digitalWrite(ledPin, ledState);
+        // }
+
+        // else
+        //   answer = "Say what?";
+
+        bot.sendMessage(msg.chat_id, answer, "Markdown");
+      }
 
       // CALLBACK MANUAL SWITCH BUTTON
       if (text == "/switchButton1")
@@ -376,6 +653,18 @@ void handleNewMessages(int numNewMessages)
         bot.sendMessageWithInlineKeyboard(chat_id, msg, "Markdown", keyboardJson, message_id);
       }
 
+      // Check if the message is a custom command to change the state
+      // if (text == "/scheduleButton2")
+      // {
+      //   scheduleEnabled2 = true;
+      //   bot.sendMessage(chat_id, "Schedule 2 activated.");
+      // }
+      // else
+      // {
+      //   bot.sendMessage(chat_id, "Schedule 2 deactivated.");
+      // }
+      // Add other commands here as needed
+
       // CALLBACK SCHEDULED BUTTON
       if (text == "/scheduleButton")
       {
@@ -407,6 +696,7 @@ void handleNewMessages(int numNewMessages)
       {
         // Togle TRUE & FALSE statements
         scheduleEnabled2 = !scheduleEnabled2;
+        Serial.println(scheduleEnabled2);
 
         // Now we can UPDATE the message, lets prepare it for sending:
         msg = "Halo " + from_name + ", perintah berhasil dijalankan.\n";
@@ -430,309 +720,185 @@ void handleNewMessages(int numNewMessages)
       }
     }
 
-    // 'Normal' messages are handled here
-    else
-    {
-
-      if (text == "/switch@bsfcontrol_bot")
-      {
-        // lets create a friendly welcome message
-        // msg = "Hi " + from_name + "!\n";
-        msg = "Berikut merupakan saklar digital untuk pompa dan lampu.\n\n";
-        msg += "Silahkan tekan tombol dibawah untuk mengendalikan kondisi perangkat.\n\n";
-
-        String keyboardJson = "["; // start Json
-        // updateInlineKeyboard for waterPump
-        keyboardJson += "[{ \"text\" : \"waterpump is ";
-        keyboardJson += (state1_waterPump ? "ON" : "OFF");
-        keyboardJson += "\", \"callback_data\" : \"/switchButton1\" }]";
-        // updateInlineKeyboard for lampuFertilizer
-        keyboardJson += ", [{ \"text\" : \"lampufertilizer is ";
-        keyboardJson += (state2_lampuFertilizer ? "ON" : "OFF");
-        keyboardJson += "\", \"callback_data\" : \"/switchButton2\" }]";
-        // keyboardJson += ", [{ \"text\" : \"Send message\", \"callback_data\" : \"/sendMessage\" }]";
-        // keyboardJson += ", [{ \"text\" : \"Go to Google\", \"url\" : \"https://www.google.com\" }]";
-        keyboardJson += "]"; // end Json                                                                                            // end of keyboard json
-
-        // first time, send this message as a normal inline keyboard message:
-        bot.sendMessageWithInlineKeyboard(chat_id, msg, "Markdown", keyboardJson);
-      }
-
-      if (text == "/schedule@bsfcontrol_bot")
-      {
-        // msg header
-        msg = "Berikut merupakan saklar digital dengan penjadwalan secara otomatis.\n\n";
-        msg += "Saklar beroperasi dengan parameter waktu dan intensitas cahaya yang ditentukan.\n\n";
-
-        // Prepare the buttons
-        String keyboardJson = "["; // start Json
-        // updateInlineKeyboard
-        keyboardJson += "[{ \"text\" : \"08 AM to 01 PM is ";
-        keyboardJson += (scheduleEnabled ? "ON" : "OFF");
-        keyboardJson += "\", \"callback_data\" : \"/scheduleButton\" }]";
-        // updateInlineKeyboard
-        keyboardJson += ", [{ \"text\" : \"schedule example is ";
-        keyboardJson += (scheduleEnabled2 ? "ON" : "OFF");
-        keyboardJson += "\", \"callback_data\" : \"/scheduleButton2\" }]";
-        keyboardJson += "]"; // end Json
-
-
-        // first time, send this message as a normal inline keyboard message:
-        bot.sendMessageWithInlineKeyboard(chat_id, msg, "Markdown", keyboardJson);
-      }
-    }
-
-    // Reading temperature or humidity takes about 250 milliseconds!
-    // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
-    // Read temperature as Celsius (the default)
-    float temperature = dht.readTemperature();
-    float humidity = dht.readHumidity();
-    // Read temperature as Fahrenheit (isFahrenheit = true)
-    // float f = dht.readTemperature(true);
-    // Compute value of light intensity
-    float lux = lightMeter.readLightLevel();
-    // Define the lowState and highState variables
-    String lowState = "idle";
-    String highState = "running";
-
-    // Get the state of the waterPump and lampuFertilizer variables as a string
-    String waterPumpState = state1_waterPump == LOW ? lowState : highState;
-    String lampuFertilizerState = state2_lampuFertilizer == LOW ? lowState : highState;
-
-    String answer;
-    for (int i = 0; i < numNewMessages; i++)
-    {
-      telegramMessage &msg = bot.messages[i];
-      Serial.println("Received " + msg.text);
-      // add @ to mention the bot in command message
-      // if (msg.text == "/setup@bsfcontrol_bot")
-      //   answer = "===========================";
-      if (msg.text == "/help@bsfcontrol_bot")
-        answer = "Berikut fungsi dari setiap _perintah_ yang tersedia:"
-                 "\n"
-                 "- _/help_ Menu bantuan perintah telegram bot.""\n"
-                 "- _/start_ Menginisialisasi perangkat.""\n"
-                 "- _/print_ Mencetak output status aktuator dan pembacaan sensor dari ESP32.""\n"
-                 "- _/switch_ Saklar digital untuk pompa dan lampu.""\n"
-                 "- _/schedule_ Saklar digital dengan waktu penjadwalan otomatis.""\n";
-      // if (msg.text == "/switch@bsfcontrol_bot")
-      //   answer = "----------------------------";
-      if (msg.text == "/start@bsfcontrol_bot")
-      answer = "Selamat Datang di  *" + msg.from_name + "* I've ever met";
-      if (msg.text == "/print@bsfcontrol_bot")
-      {
-
-        // Use the state variable in the answer variable
-        answer = "Berikut merupakan data monitoring dari hasil perhitungan :"
-                 "\n"
-                 "- Temp : " +
-                 String(temperature) + "°C\n" +
-                 "- Humi : " + String(humidity) + "%\n" +
-                 "- Lux : " + String(lux) + "lx\n" +
-                 "- waterPump : " + waterPumpState + "\n" +
-                 "- lampuFertilizer : " + lampuFertilizerState + "\n";
-      }
-      // example
-      // if (msg.text == "/led_on@bsfcontrol_bot")
-      // {
-      //   answer = "LED state set to ON";
-      //   ledState = HIGH;
-      //   digitalWrite(ledPin, ledState);
-      // }
-      // if (msg.text == "/led_off@bsfcontrol_bot")
-      // {
-      //   answer = "LED state set to OFF";
-      //   ledState = LOW;
-      //   digitalWrite(ledPin, ledState);
-      // }
-
-      // else
-      //   answer = "Say what?";
-
-      bot.sendMessage(msg.chat_id, answer, "Markdown");
-    }
-  }
-}
-
-void bot_setup()
-{
-  const String commands = F("["
-                            /*
-                            Command format is customizeable with combination of lowercase and "_". Except that, it will not shown
-                            in telegram bot command "/" ex: "{\"command\":\"sensorVal\",  \"description\":\"Print nilai output sensor\"},"
-                            */
-                            "{\"command\":\"help\",  \"description\":\"Panduan penggunaan bot\"},"
-                            // Print sensor reading from DHT11, BH1750 and actuator state
-                            "{\"command\":\"print\", \"description\":\"Output status dari esp32\"},"
-                            // Manual Switch On / Off actuator
-                            "{\"command\":\"switch\", \"description\":\"Saklar digital aktuator scr manual\"},"
-                            // Auto setup with provided timeInput data
-                            "{\"command\":\"schedule\", \"description\":\"Penjadwalan otomatis aktuator\"}" // no comma on last command
-                            // Setmode for actuators to work auto with timeInput or manually
-                            //"{\"command\":\"setmode\", \"description\":\"Setup esp32 manual atau auto\"},"
-                            // "{\"command\":\"led_on\", \"description\":\"turn led on\"},"
-                            // "{\"command\":\"led_off\", \"description\":\"turn led off\"}" // no comma on last command
-                            "]");
-  bot.setMyCommands(commands);
-  // bot.sendMessage("25235518", "Hola amigo!", "Markdown");
-}
-
-void setup()
-{
-  Serial.begin(9600);
-  // Initialize dht11 lib
-  dht.begin();
-  // Initialize the I2C bus (BH1750 library doesn't do this automatically)
-  Wire.begin();
-  // On esp8266 you can select SCL and SDA pins using Wire.begin(D4, D3);
-  // For Wemos / Lolin D1 Mini Pro and the Ambient Light shield use Wire.begin(D2, D1);
-  // Initialize bh1750 lib
-  lightMeter.begin();
-  Serial.println();
-  // Initialize the LCD display
-  lcd.begin(20, 4);
-  lcd.backlight();
-
-  // define builtin led
-  pinMode(ledPin, OUTPUT);
-  // digitalWrite(ledPin, ledState);
-
-  // Setup Relay Pin as OUTPUT
-  pinMode(relay1_waterPump, OUTPUT);
-  pinMode(relay2_lampuFertilizer, OUTPUT);
-  pinMode(relay3_solenoidValve, OUTPUT);
-
-  // Setup Manual GPIO Switch
-  pinMode(switch_pin, INPUT_PULLUP);
-  pinMode(switch_waterPump, INPUT_PULLUP);
-  pinMode(switch_lampuFertilizer, INPUT_PULLUP);
-
-  // Defining States to set on boot
-  digitalWrite(switch_pin, LOW);
-  digitalWrite(relay1_waterPump, state1_waterPump);
-  digitalWrite(relay2_lampuFertilizer, state2_lampuFertilizer);
-
-  // attempt to connect to Wifi network:
-  Serial.print("Connecting to Wifi SSID ");
-  Serial.print(WIFI_SSID);
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-    while (WiFi.status() != WL_CONNECTED)
-  {
-    Serial.print(".");
-    delay(500);
-  }
-  Serial.print("\nWiFi connected. IP address: ");
-  Serial.println(WiFi.localIP());
-  // Print ESP32 Local IP Address
-  Serial.println(WiFi.localIP());
-
-  // secured_client.setCACert(TELEGRAM_CERTIFICATE_ROOT); // Add root certificate for api.telegram.org
-  secured_client.setCACert(rootCA);
-  // secured_client.getPeerCertificate();
-  // secured_client.setInsecure();
-
-  // Telegram Bot Setup from Library
-  bot_setup();
-
-  // Init and get the time
-  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
-  printLocalTime();
-}
-
-void loop()
-{
-  //  Control & Monitoring Switch using Tekegram Bot
-  if (millis() - bot_lasttime > BOT_MTBS)
-  {
-    int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
-
-    if (scheduleEnabled2 && millis() - lastCheck > interval)
-      {
-        lastCheck = millis();
-        if (millis() >= startTime && millis() <= endTime)
-        {
-          digitalWrite(relay1_waterPump, HIGH);
-          delay(onDuration1);
-          digitalWrite(relay1_waterPump, LOW);
-          delay(offDuration);
-        }
-        else
-        {
-          // Turn on LampuFertilizer when the light intesity reduced & vice versa
-          float lux = lightMeter.readLightLevel();
-          if (lux < 50)
-          {
-            digitalWrite(relay2_lampuFertilizer, HIGH);
-            // delay(onDuration2);
-            // digitalWrite(relay2_lampuFertilizer, LOW);
-            // delay(interval - onDuration2);
-          }
-          else
-          {
-            // digitalWrite(relay2_lampuFertilizer, HIGH);
-            // delay(onDuration2);
-            digitalWrite(relay2_lampuFertilizer, LOW);
-            // delay(interval - onDuration2);
-          }
-        }
-      }
-
     while (numNewMessages)
     {
       Serial.println("got response");
-      handleNewMessages(numNewMessages);
+      // handleNewMessages(numNewMessages);
       numNewMessages = bot.getUpdates(bot.last_message_received + 1);
     }
 
     bot_lasttime = millis();
   }
 
-   // Control Manual GPIO Switch
+  unsigned long waterPumpStart = 0;
+  unsigned long waterPumpDuration = 15000;
+  unsigned long waterPumpInterval = 45000; // Interval between water pump state changes in milliseconds
+  unsigned long lastWaterPumpChangeTime = 0;
+  bool lastScheduleEnabled2 = false;
+  bool waterPumpOn = false; // flag to keep track of water pump state
+  bool flagBtn = false;
+  unsigned long waterPumpOnTime = 0;  // counter for the duration of water pump being on
+  unsigned long waterPumpOffTime = 0; // counter for the duration of water pump being off
+
+  if (scheduleEnabled2 != lastScheduleEnabled2)
+  {
+    lastScheduleEnabled2 = scheduleEnabled2;
+
+    if (digitalRead(switch_pin) == HIGH)
+    {
+      // Set flag to true if switch_pin is HIGH
+      flagBtn = true;
+    }
+    else
+    {
+      flagBtn = false;
+    }
+
+    if (flagBtn && scheduleEnabled2 && hour(now) >= 8 && hour(now) < 24)
+    {
+      // Debugging for an error
+      Serial.println(flagBtn);
+      Serial.println(scheduleEnabled2);
+      Serial.println(hour(now));
+      Serial.println(switch_pin);
+      // Serial.println(timeinfo.tm_hour);
+      // BH1750 reading affected by lux value to toggle lampuFertilizer
+      float lux = lightMeter.readLightLevel();
+      if (lux < 50)
+      {
+        digitalWrite(relay2_lampuFertilizer, HIGH);
+        state2_lampuFertilizer = true;
+        Serial.println("lampuFertilizer turned on (Scheduler).");
+      }
+      else
+      {
+        digitalWrite(relay2_lampuFertilizer, LOW);
+        state2_lampuFertilizer = false;
+        Serial.println("lampuFertilizer turned off (Scheduler).");
+      }
+
+      // Check if it's time to turn on the water pump
+      if (millis() - lastWaterPumpChangeTime >= waterPumpInterval)
+      {
+        if (waterPumpOn && millis() - waterPumpStart >= waterPumpDuration)
+        {
+          // Turn off water pump if it has been on for more than 15 seconds
+          digitalWrite(relay1_waterPump, LOW);
+          state1_waterPump = false;
+          Serial.println("waterPump turned off (Scheduler).");
+          lastWaterPumpChangeTime = millis(); // Update the lastWaterPumpChangeTime variable
+          waterPumpOn = false;
+          waterPumpOffTime = 0; // reset the waterPumpOffTime counter
+        }
+        else if (!waterPumpOn)
+        {
+          // Turn on water pump if it has been off for more than 15 seconds
+          digitalWrite(relay1_waterPump, HIGH);
+          state1_waterPump = true;
+          Serial.println("waterPump turned on (Scheduler).");
+          lastWaterPumpChangeTime = millis(); // Update the lastWaterPumpChangeTime variable
+          waterPumpOn = true;
+          waterPumpStart = millis();
+          waterPumpOnTime = 0; // reset the waterPumpOnTime counter
+        }
+      }
+
+      // Check if the water pump has been running for the duration
+      if (waterPumpOn && waterPumpOnTime < waterPumpDuration)
+      {
+        waterPumpOnTime = millis() - waterPumpStart;
+      }
+      else if (waterPumpOn && waterPumpOnTime >= waterPumpDuration)
+      {
+        digitalWrite(relay1_waterPump, LOW);
+        state1_waterPump = false;
+        Serial.println("waterPump turned off (Scheduler).");
+        lastWaterPumpChangeTime = millis(); // Update the lastWaterPumpChangeTime variable
+        waterPumpOn = false;
+        waterPumpOffTime = 0; // reset the waterPumpOffTime counter
+      }
+
+      // Check if the water pump has been off for the duration
+      if (millis() - lastWaterPumpChangeTime >= waterPumpInterval && !waterPumpOn)
+      {
+        // It's time to turn on the water pump again
+        waterPumpStart = millis();
+        digitalWrite(relay1_waterPump, HIGH);
+        state1_waterPump = true;
+        Serial.println("waterPump turned on (Scheduler).");
+        Serial.println(waterPumpOn);
+        // Serial.println(lastWaterPumpChangeTime);
+        // Serial.println(waterPumpInterval);
+        waterPumpOn = true;
+      }
+    }
+  }
+
+  // Control Manual GPIO Switch
   bool flag = false;
-  if (digitalRead(switch_pin) == LOW)
+  bool prevSwitchState = digitalRead(switch_pin);
+  if (prevSwitchState == LOW)
   {
     flag = true;
     if (digitalRead(switch_waterPump) == LOW)
     {
       digitalWrite(relay1_waterPump, HIGH);
       state1_waterPump = true;
+      Serial.println("waterPump turned on (Manual).");
     }
     else
     {
       digitalWrite(relay1_waterPump, LOW);
       state1_waterPump = false;
+      Serial.println("waterPump turned off (Manual).");
     }
     // LampuFertilizer
     if (digitalRead(switch_lampuFertilizer) == LOW)
     {
       digitalWrite(relay2_lampuFertilizer, HIGH);
       state2_lampuFertilizer = true;
+      Serial.println("lampuFertilizer turned on (Manual).");
     }
     else
     {
       digitalWrite(relay2_lampuFertilizer, LOW);
       state2_lampuFertilizer = false;
+      Serial.println("lampuFertilizer turned off (Manual).");
     }
   }
-  else if (digitalRead(switch_pin) == HIGH && flag == false)
+  else if (digitalRead(switch_pin) != prevSwitchState && flag == false)
   {
-    // flag = false;
+    flag = true;
     // stop current code here
   }
 
-  // get current time
-  struct tm timeinfo;
-  if (!getLocalTime(&timeinfo))
+  if (digitalRead(switch_pin) == HIGH)
   {
-    Serial.println("Failed to obtain time");
-    return;
+    flag = false;
   }
+
+  prevSwitchState = digitalRead(switch_pin);
+
+  // // get current time lcd not used
+  // struct tm timeinfo2;
+  // if (!getLocalTime(&timeinfo2))
+  // {
+  //   Serial.println("Failed to obtain time");
+  //   return;
+  // }
+  // char formattedDate2[7];
+  // strftime(formattedDate2, sizeof(formattedDate2), "%d %b", &timeinfo2);
+  // // Serial.println(formattedDate);
+  // char formattedTime2[6];
+  // strftime(formattedTime2, sizeof(formattedTime2), "%H:%M", &timeinfo2);
+  // // Serial.println(formattedTime);
+
+  // Formatted date and time to display on LCD
   char formattedDate[7];
-  strftime(formattedDate, sizeof(formattedDate), "%d %b", &timeinfo);
-  // Serial.println(formattedDate);
   char formattedTime[6];
-  strftime(formattedTime, sizeof(formattedTime), "%H:%M", &timeinfo);
-  // Serial.println(formattedTime);
+  // sprintf(formattedDate, "%02d %03d", day(now), month(now));
+  strftime(formattedDate, sizeof(formattedDate), "%d %b", &timeinfo);
+  sprintf(formattedTime, "%02d:%02d", hour(now), minute(now));
 
   // Define the lowState and highState variables
   String lowState = "off";
@@ -741,7 +907,6 @@ void loop()
   // Get the state of the waterPump and lampuFertilizer variables as a string
   String waterPumpState = state1_waterPump == LOW ? lowState : highState;
   String lampuFertilizerState = state2_lampuFertilizer == LOW ? lowState : highState;
-
 
   sensorStartTime = millis();
   // check time difference and delay if necessary
