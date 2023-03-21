@@ -21,6 +21,23 @@
 #include <WiFi.h>
 #include <WiFiUdp.h>
 #include <WiFiClientSecure.h>
+/*
+  witnessmenow/Universal-Arduino-Telegram-Bot 
+
+  Introduction
+
+  This library provides an interface for Telegram Bot API.
+
+  Telegram is an instant messaging service that allows for the creation of bots. Bots can be configured to send and 
+  receive messages. This is useful for Arduino projects as you can receive updates from your project or issue it 
+  commands via your Telegram app from anywhere.
+
+  This is a library forked from one library and inspired by another
+
+  Each library only supported a single type of Arduino and had different features implemented. The only thing that needs 
+  to be different for each board is the actual sending of requests to Telegram so I thought a library that additional 
+  architectures or boards could be configured easily would be useful,
+*/
 #include <UniversalTelegramBot.h>
 
 // RTC library
@@ -36,6 +53,23 @@
 */
 #include <NTPClient.h>
 #include "time.h"
+/*
+  Arduino Time Library
+  https://registry.platformio.org/libraries/paulstoffregen/Time
+
+  Time is a library that provides timekeeping functionality for Arduino.
+
+  Using the Arduino Library Manager, install "Time by Michael Margolis".
+
+  The code is derived from the Playground DateTime library but is updated to provide an API that is more
+  flexible and easier to use.
+
+  A primary goal was to enable date and time functionality that can be used with a variety of external time
+  sources with minimum differences required in sketch logic.
+
+  Example sketches illustrate how similar sketch code can be used with: a Real Time Clock, internet NTP time
+  service, GPS time data, and Serial time messages from a computer for time synchronization.
+*/
 #include <TimeLib.h>
 const long gmtOffset_sec = 25200; // GMT+7 timezone
 const int daylightOffset_sec = 3600;
@@ -43,11 +77,6 @@ const char *ntpServer = "time.google.com";
 const int ntpPort = 123;
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, ntpServer, gmtOffset_sec, daylightOffset_sec);
-// void beginUDP() {
-//   ntpUDP.begin(ntpPort);
-// }
-
-// NTPClient timeClient(ntpUDP, ntpServer, gmtOffset_sec, daylightOffset_sec);
 
 // Wifi network station credentials
 #define WIFI_SSID "Ariaqi 3"
@@ -295,43 +324,9 @@ void bot_setup()
   bot.setMyCommands(commands);
   // bot.sendMessage("25235518", "Hola amigo!", "Markdown");
 }
-
+// Moved numNewMessages to void loop()
 // void handleNewMessages(int numNewMessages)
 // {
-//   Serial.print("handleNewMessages ");
-//   Serial.println(numNewMessages);
-
-//   for (int i = 0; i < numNewMessages; i++)
-//   {
-//     // Chat id of the requester
-//     String chat_id = String(bot.messages[i].chat_id);
-//     if (chat_id != CHAT_ID)
-//     {
-//       bot.sendMessage(chat_id, "Unauthorized user", "");
-//       return;
-//     }
-//     // Get all the important data from the message
-//     int message_id = bot.messages[i].message_id;
-//     // String chat_id = String(bot.messages[i].chat_id);
-//     String text = bot.messages[i].text;
-//     String from_name = bot.messages[i].from_name;
-//     if (from_name == "")
-//       from_name = "Guest";
-//     String msg = ""; // init a message string to use
-
-//     // Output the message_id to give you feeling on how this example works
-//     Serial.print("Message id: ");
-//     Serial.println(message_id);
-
-//     // Inline buttons with callbacks when pressed will raise a callback_query message
-//     if (bot.messages[i].type == "callback_query")
-//     {
-//       Serial.print("Call back button pressed by: ");
-//       Serial.println(bot.messages[i].from_id);
-//       Serial.print("Data on the button: ");
-//       Serial.println(bot.messages[i].text);
-//     }
-//   }
 // }
 
 void setup()
@@ -390,7 +385,6 @@ void setup()
 
   // Telegram Bot Setup from Library
   bot_setup();
-  // handleNewMessages();
 
   // Initialize and synchronize time with NTP
   ntpUDP.begin(ntpPort);
@@ -730,19 +724,12 @@ void loop()
     bot_lasttime = millis();
   }
 
-  unsigned long waterPumpStart = 0;
-  unsigned long waterPumpDuration = 15000;
-  unsigned long waterPumpInterval = 45000; // Interval between water pump state changes in milliseconds
-  unsigned long lastWaterPumpChangeTime = 0;
-  bool lastScheduleEnabled2 = false;
-  bool waterPumpOn = false; // flag to keep track of water pump state
+  // scheduleEnabled for field testing only
+  bool lastScheduleEnabled = false;
   bool flagBtn = false;
-  unsigned long waterPumpOnTime = 0;  // counter for the duration of water pump being on
-  unsigned long waterPumpOffTime = 0; // counter for the duration of water pump being off
-
-  if (scheduleEnabled2 != lastScheduleEnabled2)
+  if (scheduleEnabled != lastScheduleEnabled)
   {
-    lastScheduleEnabled2 = scheduleEnabled2;
+    lastScheduleEnabled = scheduleEnabled;
 
     if (digitalRead(switch_pin) == HIGH)
     {
@@ -754,13 +741,13 @@ void loop()
       flagBtn = false;
     }
 
-    if (flagBtn && scheduleEnabled2 && hour(now) >= 8 && hour(now) < 24)
+    if (flagBtn && scheduleEnabled && hour(now) >= 8 && hour(now) < 14)
     {
       // Debugging for an error
-      Serial.println(flagBtn);
-      Serial.println(scheduleEnabled2);
-      Serial.println(hour(now));
-      Serial.println(switch_pin);
+      // Serial.println(flagBtn);
+      // Serial.println(scheduleEnabled2);
+      // Serial.println(hour(now));
+      // Serial.println(switch_pin);
       // Serial.println(timeinfo.tm_hour);
       // BH1750 reading affected by lux value to toggle lampuFertilizer
       float lux = lightMeter.readLightLevel();
@@ -778,181 +765,213 @@ void loop()
       }
 
       // Check if it's time to turn on the water pump
-      if (millis() - lastWaterPumpChangeTime >= waterPumpInterval)
+      int previousMinute = 0;
+      int currentSecond = second(now);
+      int currentMinute = minute(now);
+      Serial.print("detik ke : ");
+      Serial.println(currentSecond);
+      Serial.print("menit ke : ");
+      Serial.println(currentMinute);
+      if (currentSecond <= 15)
       {
-        if (waterPumpOn && millis() - waterPumpStart >= waterPumpDuration)
-        {
-          // Turn off water pump if it has been on for more than 15 seconds
-          digitalWrite(relay1_waterPump, LOW);
-          state1_waterPump = false;
-          Serial.println("waterPump turned off (Scheduler).");
-          lastWaterPumpChangeTime = millis(); // Update the lastWaterPumpChangeTime variable
-          waterPumpOn = false;
-          waterPumpOffTime = 0; // reset the waterPumpOffTime counter
-        }
-        else if (!waterPumpOn)
-        {
-          // Turn on water pump if it has been off for more than 15 seconds
-          digitalWrite(relay1_waterPump, HIGH);
-          state1_waterPump = true;
-          Serial.println("waterPump turned on (Scheduler).");
-          lastWaterPumpChangeTime = millis(); // Update the lastWaterPumpChangeTime variable
-          waterPumpOn = true;
-          waterPumpStart = millis();
-          waterPumpOnTime = 0; // reset the waterPumpOnTime counter
-        }
-      }
-
-      // Check if the water pump has been running for the duration
-      if (waterPumpOn && waterPumpOnTime < waterPumpDuration)
-      {
-        waterPumpOnTime = millis() - waterPumpStart;
-      }
-      else if (waterPumpOn && waterPumpOnTime >= waterPumpDuration)
-      {
-        digitalWrite(relay1_waterPump, LOW);
-        state1_waterPump = false;
-        Serial.println("waterPump turned off (Scheduler).");
-        lastWaterPumpChangeTime = millis(); // Update the lastWaterPumpChangeTime variable
-        waterPumpOn = false;
-        waterPumpOffTime = 0; // reset the waterPumpOffTime counter
-      }
-
-      // Check if the water pump has been off for the duration
-      if (millis() - lastWaterPumpChangeTime >= waterPumpInterval && !waterPumpOn)
-      {
-        // It's time to turn on the water pump again
-        waterPumpStart = millis();
+        // Turn on water pump for 15 secs
         digitalWrite(relay1_waterPump, HIGH);
         state1_waterPump = true;
         Serial.println("waterPump turned on (Scheduler).");
-        Serial.println(waterPumpOn);
-        // Serial.println(lastWaterPumpChangeTime);
-        // Serial.println(waterPumpInterval);
-        waterPumpOn = true;
+      }
+      else if (currentSecond > 15 && currentMinute != previousMinute)
+      {
+        // Turn off water pump for 45 secs
+        digitalWrite(relay1_waterPump, LOW);
+        state1_waterPump = false;
+        Serial.println("waterPump turned off (Scheduler).");
       }
     }
   }
 
-  // Control Manual GPIO Switch
-  bool flag = false;
-  bool prevSwitchState = digitalRead(switch_pin);
-  if (prevSwitchState == LOW)
-  {
-    flag = true;
-    if (digitalRead(switch_waterPump) == LOW)
+    // scheduleEnabled2 for demo testing only
+    bool lastScheduleEnabled2 = false;
+    bool flagBtn2 = false;
+    if (scheduleEnabled2 != lastScheduleEnabled2)
     {
-      digitalWrite(relay1_waterPump, HIGH);
-      state1_waterPump = true;
-      Serial.println("waterPump turned on (Manual).");
+      lastScheduleEnabled2 = scheduleEnabled2;
+
+      if (digitalRead(switch_pin) == HIGH)
+      {
+        // Set flag to true if switch_pin is HIGH
+        flagBtn2 = true;
+      }
+      else
+      {
+        flagBtn2 = false;
+      }
+
+      if (flagBtn2 && scheduleEnabled2 && hour(now) >= 8 && hour(now) < 24)
+      {
+        // Debugging for an error
+        // Serial.println(flagBtn);
+        // Serial.println(scheduleEnabled2);
+        // Serial.println(hour(now));
+        // Serial.println(switch_pin);
+        // Serial.println(timeinfo.tm_hour);
+        // BH1750 reading affected by lux value to toggle lampuFertilizer
+        float lux = lightMeter.readLightLevel();
+        if (lux < 50)
+        {
+          digitalWrite(relay2_lampuFertilizer, HIGH);
+          state2_lampuFertilizer = true;
+          Serial.println("lampuFertilizer turned on (Scheduler).");
+        }
+        else
+        {
+          digitalWrite(relay2_lampuFertilizer, LOW);
+          state2_lampuFertilizer = false;
+          Serial.println("lampuFertilizer turned off (Scheduler).");
+        }
+
+        // Check if it's time to turn on the water pump
+        int previousMinute = 0;
+        int currentSecond = second(now);
+        int currentMinute = minute(now);
+        Serial.print("detik ke : ");
+        Serial.println(currentSecond);
+        Serial.print("menit ke : ");
+        Serial.println(currentMinute);
+        if (currentSecond <= 15)
+        {
+          // Turn on water pump for 15 secs
+          digitalWrite(relay1_waterPump, HIGH);
+          state1_waterPump = true;
+          Serial.println("waterPump turned on (Scheduler).");
+        }
+        else if (currentSecond > 15 && currentMinute != previousMinute)
+        {
+          // Turn off water pump for 45 secs
+          digitalWrite(relay1_waterPump, LOW);
+          state1_waterPump = false;
+          Serial.println("waterPump turned off (Scheduler).");
+        }
+      }
     }
-    else
+    // Control Manual GPIO Switch
+    bool flag = false;
+    bool prevSwitchState = digitalRead(switch_pin);
+    if (prevSwitchState == LOW)
     {
-      digitalWrite(relay1_waterPump, LOW);
-      state1_waterPump = false;
-      Serial.println("waterPump turned off (Manual).");
+      flag = true;
+      if (digitalRead(switch_waterPump) == LOW)
+      {
+        digitalWrite(relay1_waterPump, HIGH);
+        state1_waterPump = true;
+        Serial.println("waterPump turned on (Manual).");
+      }
+      else
+      {
+        digitalWrite(relay1_waterPump, LOW);
+        state1_waterPump = false;
+        Serial.println("waterPump turned off (Manual).");
+      }
+      // LampuFertilizer
+      if (digitalRead(switch_lampuFertilizer) == LOW)
+      {
+        digitalWrite(relay2_lampuFertilizer, HIGH);
+        state2_lampuFertilizer = true;
+        Serial.println("lampuFertilizer turned on (Manual).");
+      }
+      else
+      {
+        digitalWrite(relay2_lampuFertilizer, LOW);
+        state2_lampuFertilizer = false;
+        Serial.println("lampuFertilizer turned off (Manual).");
+      }
     }
-    // LampuFertilizer
-    if (digitalRead(switch_lampuFertilizer) == LOW)
+    else if (digitalRead(switch_pin) != prevSwitchState && flag == false)
     {
-      digitalWrite(relay2_lampuFertilizer, HIGH);
-      state2_lampuFertilizer = true;
-      Serial.println("lampuFertilizer turned on (Manual).");
+      flag = true;
+      // stop current code here
     }
-    else
+
+    if (digitalRead(switch_pin) == HIGH)
     {
-      digitalWrite(relay2_lampuFertilizer, LOW);
-      state2_lampuFertilizer = false;
-      Serial.println("lampuFertilizer turned off (Manual).");
+      flag = false;
+    }
+
+    prevSwitchState = digitalRead(switch_pin);
+
+    // // get current time lcd not used
+    // struct tm timeinfo2;
+    // if (!getLocalTime(&timeinfo2))
+    // {
+    //   Serial.println("Failed to obtain time");
+    //   return;
+    // }
+    // char formattedDate2[7];
+    // strftime(formattedDate2, sizeof(formattedDate2), "%d %b", &timeinfo2);
+    // // Serial.println(formattedDate);
+    // char formattedTime2[6];
+    // strftime(formattedTime2, sizeof(formattedTime2), "%H:%M", &timeinfo2);
+    // // Serial.println(formattedTime);
+
+    // Formatted date and time to display on LCD
+    char formattedDate[7];
+    char formattedTime[6];
+    // sprintf(formattedDate, "%02d %03d", day(now), month(now));
+    strftime(formattedDate, sizeof(formattedDate), "%d %b", &timeinfo);
+    sprintf(formattedTime, "%02d:%02d", hour(now), minute(now));
+
+    // Define the lowState and highState variables
+    String lowState = "off";
+    String highState = "on";
+
+    // Get the state of the waterPump and lampuFertilizer variables as a string
+    String waterPumpState = state1_waterPump == LOW ? lowState : highState;
+    String lampuFertilizerState = state2_lampuFertilizer == LOW ? lowState : highState;
+
+    sensorStartTime = millis();
+    // check time difference and delay if necessary
+    // Reading temperature or humidity takes about 250 milliseconds!
+    // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+    // Read temperature as Celsius (the default)
+    float temperature = dht.readTemperature();
+    float humidity = dht.readHumidity();
+    // Read temperature as Fahrenheit (isFahrenheit = true)
+    // float f = dht.readTemperature(true);
+    // Read light intensity
+    float lux = lightMeter.readLightLevel();
+
+    // Print the sensor data on the LCD display
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Temp: ");
+    lcd.print(temperature);
+    lcd.print(" C ");
+    lcd.print(formattedDate);
+
+    lcd.setCursor(0, 1);
+    lcd.print("Humi: ");
+    lcd.print(humidity);
+    lcd.print(" % ");
+    lcd.print(formattedTime);
+
+    lcd.setCursor(0, 2);
+    lcd.print("Lux : ");
+    lcd.print(lux);
+    lcd.print(" lx");
+
+    lcd.setCursor(0, 3);
+    lcd.print("Pump: ");
+    lcd.print(waterPumpState);
+    lcd.print(" Lamp: ");
+    lcd.print(lampuFertilizerState);
+
+    unsigned long sensorEndTime = millis();
+    if (sensorEndTime - sensorStartTime < sensorDelay)
+    {
+      delay(sensorDelay - (sensorEndTime - sensorStartTime));
+    }
+    if (isnan(humidity) || isnan(temperature) /* || isnan(f) */)
+    {
+      Serial.println(F("Failed to read from DHT sensor!"));
+      return;
     }
   }
-  else if (digitalRead(switch_pin) != prevSwitchState && flag == false)
-  {
-    flag = true;
-    // stop current code here
-  }
-
-  if (digitalRead(switch_pin) == HIGH)
-  {
-    flag = false;
-  }
-
-  prevSwitchState = digitalRead(switch_pin);
-
-  // // get current time lcd not used
-  // struct tm timeinfo2;
-  // if (!getLocalTime(&timeinfo2))
-  // {
-  //   Serial.println("Failed to obtain time");
-  //   return;
-  // }
-  // char formattedDate2[7];
-  // strftime(formattedDate2, sizeof(formattedDate2), "%d %b", &timeinfo2);
-  // // Serial.println(formattedDate);
-  // char formattedTime2[6];
-  // strftime(formattedTime2, sizeof(formattedTime2), "%H:%M", &timeinfo2);
-  // // Serial.println(formattedTime);
-
-  // Formatted date and time to display on LCD
-  char formattedDate[7];
-  char formattedTime[6];
-  // sprintf(formattedDate, "%02d %03d", day(now), month(now));
-  strftime(formattedDate, sizeof(formattedDate), "%d %b", &timeinfo);
-  sprintf(formattedTime, "%02d:%02d", hour(now), minute(now));
-
-  // Define the lowState and highState variables
-  String lowState = "off";
-  String highState = "on";
-
-  // Get the state of the waterPump and lampuFertilizer variables as a string
-  String waterPumpState = state1_waterPump == LOW ? lowState : highState;
-  String lampuFertilizerState = state2_lampuFertilizer == LOW ? lowState : highState;
-
-  sensorStartTime = millis();
-  // check time difference and delay if necessary
-  // Reading temperature or humidity takes about 250 milliseconds!
-  // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
-  // Read temperature as Celsius (the default)
-  float temperature = dht.readTemperature();
-  float humidity = dht.readHumidity();
-  // Read temperature as Fahrenheit (isFahrenheit = true)
-  // float f = dht.readTemperature(true);
-  // Read light intensity
-  float lux = lightMeter.readLightLevel();
-
-  // Print the sensor data on the LCD display
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("Temp: ");
-  lcd.print(temperature);
-  lcd.print(" C ");
-  lcd.print(formattedDate);
-
-  lcd.setCursor(0, 1);
-  lcd.print("Humi: ");
-  lcd.print(humidity);
-  lcd.print(" % ");
-  lcd.print(formattedTime);
-
-  lcd.setCursor(0, 2);
-  lcd.print("Lux : ");
-  lcd.print(lux);
-  lcd.print(" lx");
-
-  lcd.setCursor(0, 3);
-  lcd.print("Pump: ");
-  lcd.print(waterPumpState);
-  lcd.print(" Lamp: ");
-  lcd.print(lampuFertilizerState);
-
-  unsigned long sensorEndTime = millis();
-  if (sensorEndTime - sensorStartTime < sensorDelay)
-  {
-    delay(sensorDelay - (sensorEndTime - sensorStartTime));
-  }
-  if (isnan(humidity) || isnan(temperature) /* || isnan(f) */)
-  {
-    Serial.println(F("Failed to read from DHT sensor!"));
-    return;
-  }
-}
