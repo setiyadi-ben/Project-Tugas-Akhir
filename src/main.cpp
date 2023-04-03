@@ -309,6 +309,8 @@ void bot_setup()
                             Command format is customizeable with combination of lowercase and "_". Except that, it will not shown
                             in telegram bot command "/" ex: "{\"command\":\"sensorVal\",  \"description\":\"Print nilai output sensor\"},"
                             */
+                            // Starting and getting started with the bot
+                            "{\"command\":\"start\",  \"description\":\"Memulai penggunaan bot\"},"
                             "{\"command\":\"help\",  \"description\":\"Panduan penggunaan bot\"},"
                             // Print sensor reading from DHT11, BH1750 and actuator state
                             "{\"command\":\"print\", \"description\":\"Output status dari esp32\"},"
@@ -446,6 +448,19 @@ void loop()
       // Output the message_id to give you feeling on how this example works
       Serial.print("Message id: ");
       Serial.println(message_id);
+
+      // UNAPPLIED
+      // Check if the minutes value has changed since the last time we checked
+      // static int lastMinute = -1; // Initialize to an impossible value
+      // int lastMessageId = 0;
+      // // Schedule the message to be deleted after 1 minutes
+      // if (minute(now) != lastMinute && lastMessageId > 0)
+      // {
+      //   // Update the lastMinute variable
+      //   lastMinute = minute(now);
+      //   bot.deleteMessage(CHAT_ID, lastMessageId);
+      //   Serial.println("Message was deleted");
+      // }
 
       // Inline buttons with callbacks when pressed will raise a callback_query message
       if (bot.messages[i].type == "callback_query")
@@ -719,6 +734,8 @@ void loop()
       Serial.println("got response");
       // handleNewMessages(numNewMessages);
       numNewMessages = bot.getUpdates(bot.last_message_received + 1);
+      
+
     }
 
     bot_lasttime = millis();

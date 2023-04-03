@@ -575,6 +575,14 @@ bool UniversalTelegramBot::sendMessage(const String& chat_id, const String& text
   return sendPostMessage(payload.as<JsonObject>(), message_id); // if message id == 0 then edit is false, else edit is true
 }
 
+bool UniversalTelegramBot::deleteMessage(const String& chat_id, int message_id) {
+  DynamicJsonDocument payload(maxMessageLength);
+  payload["chat_id"] = chat_id;
+  payload["message_id"] = message_id;
+
+  return sendPostMessage(payload.as<JsonObject>(), false); // false indicates that it's not an edit
+}
+
 bool UniversalTelegramBot::sendMessageWithReplyKeyboard(
     const String& chat_id, const String& text, const String& parse_mode, const String& keyboard,
     bool resize, bool oneTime, bool selective) {
