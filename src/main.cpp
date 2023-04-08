@@ -79,10 +79,10 @@ WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, ntpServer, gmtOffset_sec, daylightOffset_sec);
 
 // Wifi network station credentials
-#define WIFI_SSID "Ariaqi 3"
-#define WIFI_PASSWORD "lisa2218"
-// #define WIFI_SSID "Redmi 7"
-// #define WIFI_PASSWORD "11111111"
+// #define WIFI_SSID "Ariaqi 3"
+// #define WIFI_PASSWORD "lisa2218"
+#define WIFI_SSID "Redmi 7"
+#define WIFI_PASSWORD "11111111"
 
 // Telegram BOT Token (Get from Botfather)
 /*
@@ -331,6 +331,7 @@ void bot_setup()
 // {
 // }
 
+
 void setup()
 {
   Serial.begin(9600);
@@ -383,7 +384,7 @@ void setup()
   // secured_client.setCACert(TELEGRAM_CERTIFICATE_ROOT); // Add root certificate for api.telegram.org
   secured_client.setCACert(rootCA);
   // secured_client.getPeerCertificate();
-  // secured_client.setInsecure();
+  secured_client.setInsecure();
 
   // Telegram Bot Setup from Library
   bot_setup();
@@ -399,7 +400,7 @@ void setup()
 
   // Init and get the time
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
-  // printLocalTime();
+  // // printLocalTime();
 }
 
 // Defining time schedule for an actuator to work
@@ -871,49 +872,52 @@ void loop()
       }
     }
     // Control Manual GPIO Switch
-    bool flag = false;
-    bool prevSwitchState = digitalRead(switch_pin);
-    if (prevSwitchState == LOW)
+    if (WiFi.status() != WL_CONNECTED || WiFi.status() == WL_CONNECTED)
     {
-      flag = true;
-      if (digitalRead(switch_waterPump) == LOW)
+      bool flag = false;
+      bool prevSwitchState = digitalRead(switch_pin);
+      if (prevSwitchState == LOW)
       {
-        digitalWrite(relay1_waterPump, HIGH);
-        state1_waterPump = true;
-        Serial.println("waterPump turned on (Manual).");
+        flag = true;
+        if (digitalRead(switch_waterPump) == LOW)
+        {
+          digitalWrite(relay1_waterPump, HIGH);
+          state1_waterPump = true;
+          Serial.println("waterPump turned on (Manual).");
+        }
+        else
+        {
+          digitalWrite(relay1_waterPump, LOW);
+          state1_waterPump = false;
+          Serial.println("waterPump turned off (Manual).");
+        }
+        // LampuFertilizer
+        if (digitalRead(switch_lampuFertilizer) == LOW)
+        {
+          digitalWrite(relay2_lampuFertilizer, HIGH);
+          state2_lampuFertilizer = true;
+          Serial.println("lampuFertilizer turned on (Manual).");
+        }
+        else
+        {
+          digitalWrite(relay2_lampuFertilizer, LOW);
+          state2_lampuFertilizer = false;
+          Serial.println("lampuFertilizer turned off (Manual).");
+        }
       }
-      else
+      else if (digitalRead(switch_pin) != prevSwitchState && flag == false)
       {
-        digitalWrite(relay1_waterPump, LOW);
-        state1_waterPump = false;
-        Serial.println("waterPump turned off (Manual).");
+        flag = true;
+        // stop current code here
       }
-      // LampuFertilizer
-      if (digitalRead(switch_lampuFertilizer) == LOW)
-      {
-        digitalWrite(relay2_lampuFertilizer, HIGH);
-        state2_lampuFertilizer = true;
-        Serial.println("lampuFertilizer turned on (Manual).");
-      }
-      else
-      {
-        digitalWrite(relay2_lampuFertilizer, LOW);
-        state2_lampuFertilizer = false;
-        Serial.println("lampuFertilizer turned off (Manual).");
-      }
-    }
-    else if (digitalRead(switch_pin) != prevSwitchState && flag == false)
-    {
-      flag = true;
-      // stop current code here
-    }
 
-    if (digitalRead(switch_pin) == HIGH)
-    {
-      flag = false;
-    }
+      if (digitalRead(switch_pin) == HIGH)
+      {
+        flag = false;
+      }
 
-    prevSwitchState = digitalRead(switch_pin);
+      prevSwitchState = digitalRead(switch_pin);
+    }
 
     // // get current time lcd not used
     // struct tm timeinfo2;
