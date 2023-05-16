@@ -79,10 +79,10 @@ WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, ntpServer, gmtOffset_sec, daylightOffset_sec);
 
 // Wifi network station credentials
-// #define WIFI_SSID "Ariaqi 3"
-// #define WIFI_PASSWORD "lisa2218"
-#define WIFI_SSID "Redmi 7"
-#define WIFI_PASSWORD "11111111"
+#define WIFI_SSID "Ariaqi 3"
+#define WIFI_PASSWORD "lisa2218"
+// #define WIFI_SSID "Redmi 7"
+// #define WIFI_PASSWORD "11111111"
 
 // Telegram BOT Token (Get from Botfather)
 /*
@@ -689,7 +689,7 @@ void loop()
         // Prepare the buttons
         String keyboardJson = "["; // start Json
         // updateInlineKeyboard
-        keyboardJson += "[{ \"text\" : \"08 AM to 01 PM is ";
+        keyboardJson += "[{ \"text\" : \"08 AM to 02 PM is ";
         keyboardJson += (scheduleEnabled ? "ON" : "OFF");
         keyboardJson += "\", \"callback_data\" : \"/scheduleButton\" }]";
         // updateInlineKeyboard
@@ -716,7 +716,7 @@ void loop()
         // Prepare the buttons
         String keyboardJson = "["; // start Json
         // updateInlineKeyboard
-        keyboardJson += "[{ \"text\" : \"08 AM to 01 PM is ";
+        keyboardJson += "[{ \"text\" : \"08 AM to 02 PM is ";
         keyboardJson += (scheduleEnabled ? "ON" : "OFF");
         keyboardJson += "\", \"callback_data\" : \"/scheduleButton\" }]";
         // updateInlineKeyboard

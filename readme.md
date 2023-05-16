@@ -30,6 +30,9 @@
 - Sistem dapat bekerja di saat internet putus sekalipun dengan syarat pada kondisi awal atau setelah reset pernah terhubung ke internet satu kali.
 
 ## Bugs
+- Saat koneksi internet _unstable_, terkadang akan memunculkan _duplicate messages_.
+- Saat proses _booting_, relay akan menyala di awal hingga program selesai dimuat (khusus untuk konfigurasi relay _Normally Close_ atau _NC_).
+- 
 (in-progress)
 ## Spesifikasi
 - _Panel box dimensions_ (cm, cm, cm, cm).
