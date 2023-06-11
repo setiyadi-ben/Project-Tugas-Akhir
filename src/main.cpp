@@ -79,8 +79,8 @@ WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, ntpServer, gmtOffset_sec, daylightOffset_sec);
 
 // Wifi network station credentials
-#define WIFI_SSID "Ariaqi 3"
-#define WIFI_PASSWORD "lisa2218"
+#define WIFI_SSID "XL satu@benny"
+#define WIFI_PASSWORD "jaringanku"
 // #define WIFI_SSID "Redmi 7"
 // #define WIFI_PASSWORD "11111111"
 
@@ -278,8 +278,8 @@ const int switch_pin = 5;
 // #define switch_lampuFertilizer 12
 
 // relay default state (my relay configuration is Normally Closed)
-bool state1_waterPump = LOW;
-bool state2_lampuFertilizer = LOW;
+bool state1_waterPump = HIGH;
+bool state2_lampuFertilizer = HIGH;
 bool state3_solenoidValve = LOW;
 
 unsigned long sensorStartTime;
@@ -528,8 +528,8 @@ void loop()
       // Compute value of light intensity
       float lux = lightMeter.readLightLevel();
       // Define the lowState and highState variables
-      String lowState = "idle";
-      String highState = "running";
+      String lowState = "on";
+      String highState = "off";
 
       // Get the state of the waterPump and lampuFertilizer variables as a string
       String waterPumpState = state1_waterPump == LOW ? lowState : highState;
@@ -693,7 +693,7 @@ void loop()
         keyboardJson += (scheduleEnabled ? "ON" : "OFF");
         keyboardJson += "\", \"callback_data\" : \"/scheduleButton\" }]";
         // updateInlineKeyboard
-        keyboardJson += ", [{ \"text\" : \"schedule example is ";
+        keyboardJson += ", [{ \"text\" : \"Schedule demo is ";
         keyboardJson += (scheduleEnabled2 ? "ON" : "OFF");
         keyboardJson += "\", \"callback_data\" : \"/scheduleButton2\" }]";
         keyboardJson += "]"; // end Json
@@ -769,15 +769,15 @@ void loop()
       // Serial.println(timeinfo.tm_hour);
       // BH1750 reading affected by lux value to toggle lampuFertilizer
       float lux = lightMeter.readLightLevel();
-      if (lux < 50)
+      if (lux < 3780)
       {
-        digitalWrite(relay2_lampuFertilizer, HIGH);
+        digitalWrite(relay2_lampuFertilizer, LOW);
         state2_lampuFertilizer = true;
         Serial.println("lampuFertilizer turned on (Scheduler).");
       }
       else
       {
-        digitalWrite(relay2_lampuFertilizer, LOW);
+        digitalWrite(relay2_lampuFertilizer, HIGH);
         state2_lampuFertilizer = false;
         Serial.println("lampuFertilizer turned off (Scheduler).");
       }
@@ -790,17 +790,18 @@ void loop()
       Serial.println(currentSecond);
       Serial.print("menit ke : ");
       Serial.println(currentMinute);
-      if (currentSecond <= 15)
+      if (currentSecond <= 15 && currentMinute == 0 || currentMinute == 30)
       {
         // Turn on water pump for 15 secs
-        digitalWrite(relay1_waterPump, HIGH);
+        digitalWrite(relay1_waterPump, LOW);
         state1_waterPump = true;
         Serial.println("waterPump turned on (Scheduler).");
       }
-      else if (currentSecond > 15 && currentMinute != previousMinute)
+      // (currentSecond > 15 && currentMinute != previousMinute)
+      else if (currentSecond > 15 )
       {
-        // Turn off water pump for 45 secs
-        digitalWrite(relay1_waterPump, LOW);
+        // Turn off water pump for 30 min
+        digitalWrite(relay1_waterPump, HIGH);
         state1_waterPump = false;
         Serial.println("waterPump turned off (Scheduler).");
       }
@@ -834,15 +835,15 @@ void loop()
         // Serial.println(timeinfo.tm_hour);
         // BH1750 reading affected by lux value to toggle lampuFertilizer
         float lux = lightMeter.readLightLevel();
-        if (lux < 50)
+        if (lux < 3780)
         {
-          digitalWrite(relay2_lampuFertilizer, HIGH);
+          digitalWrite(relay2_lampuFertilizer, LOW);
           state2_lampuFertilizer = true;
           Serial.println("lampuFertilizer turned on (Scheduler).");
         }
         else
         {
-          digitalWrite(relay2_lampuFertilizer, LOW);
+          digitalWrite(relay2_lampuFertilizer, HIGH);
           state2_lampuFertilizer = false;
           Serial.println("lampuFertilizer turned off (Scheduler).");
         }
@@ -858,14 +859,14 @@ void loop()
         if (currentSecond <= 15)
         {
           // Turn on water pump for 15 secs
-          digitalWrite(relay1_waterPump, HIGH);
+          digitalWrite(relay1_waterPump, LOW);
           state1_waterPump = true;
           Serial.println("waterPump turned on (Scheduler).");
         }
         else if (currentSecond > 15 && currentMinute != previousMinute)
         {
           // Turn off water pump for 45 secs
-          digitalWrite(relay1_waterPump, LOW);
+          digitalWrite(relay1_waterPump, HIGH);
           state1_waterPump = false;
           Serial.println("waterPump turned off (Scheduler).");
         }
@@ -881,26 +882,26 @@ void loop()
         flag = true;
         if (digitalRead(switch_waterPump) == LOW)
         {
-          digitalWrite(relay1_waterPump, HIGH);
+          digitalWrite(relay1_waterPump, LOW);
           state1_waterPump = true;
           Serial.println("waterPump turned on (Manual).");
         }
         else
         {
-          digitalWrite(relay1_waterPump, LOW);
+          digitalWrite(relay1_waterPump, HIGH);
           state1_waterPump = false;
           Serial.println("waterPump turned off (Manual).");
         }
         // LampuFertilizer
         if (digitalRead(switch_lampuFertilizer) == LOW)
         {
-          digitalWrite(relay2_lampuFertilizer, HIGH);
+          digitalWrite(relay2_lampuFertilizer, LOW);
           state2_lampuFertilizer = true;
           Serial.println("lampuFertilizer turned on (Manual).");
         }
         else
         {
-          digitalWrite(relay2_lampuFertilizer, LOW);
+          digitalWrite(relay2_lampuFertilizer, HIGH);
           state2_lampuFertilizer = false;
           Serial.println("lampuFertilizer turned off (Manual).");
         }
@@ -941,8 +942,8 @@ void loop()
     sprintf(formattedTime, "%02d:%02d", hour(now), minute(now));
 
     // Define the lowState and highState variables
-    String lowState = "off";
-    String highState = "on";
+    String lowState = "on";
+    String highState = "off";
 
     // Get the state of the waterPump and lampuFertilizer variables as a string
     String waterPumpState = state1_waterPump == LOW ? lowState : highState;

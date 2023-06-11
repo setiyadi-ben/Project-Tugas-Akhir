@@ -31,7 +31,7 @@
 
 ## Bugs
 - Saat koneksi internet _unstable_, terkadang akan memunculkan _duplicate messages_.
-- Saat proses _booting_, relay akan menyala di awal hingga program selesai dimuat (khusus untuk konfigurasi relay _Normally Close_ atau _NC_).
+- ~~Saat proses _booting_, relay akan menyala di awal hingga program selesai dimuat (khusus untuk konfigurasi relay _Normally Close_ atau _NC_).~~
 - 
 (in-progress)
 ## Spesifikasi
