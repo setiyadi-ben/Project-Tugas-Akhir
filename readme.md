@@ -6,7 +6,7 @@
 
 ## Dikembangkan oleh Benny Hartanto Setiyadi
 ### Bermitra dengan :
-- Ngadiyono sebagai Kepala Bagian dari Maggot BSF Kabupaten Semarang.
+- Gunardi sebagai Penanggung Jawab dari Rumah Maggot Kabupaten Semarang.
 ### Dibawah bimbingan :
 - Ari Sriyanto N., S.T., M.T., M.Sc., ( Dosen Pembimbing I ).
 - Sindung H.W.S., B.S.E.E, M.Eng.Sc., ( Dosen Pembimbing II ).
