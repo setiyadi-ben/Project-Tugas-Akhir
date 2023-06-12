@@ -22,20 +22,20 @@
 #include <WiFiUdp.h>
 #include <WiFiClientSecure.h>
 /*
-  witnessmenow/Universal-Arduino-Telegram-Bot 
+  witnessmenow/Universal-Arduino-Telegram-Bot
 
   Introduction
 
   This library provides an interface for Telegram Bot API.
 
-  Telegram is an instant messaging service that allows for the creation of bots. Bots can be configured to send and 
-  receive messages. This is useful for Arduino projects as you can receive updates from your project or issue it 
+  Telegram is an instant messaging service that allows for the creation of bots. Bots can be configured to send and
+  receive messages. This is useful for Arduino projects as you can receive updates from your project or issue it
   commands via your Telegram app from anywhere.
 
   This is a library forked from one library and inspired by another
 
-  Each library only supported a single type of Arduino and had different features implemented. The only thing that needs 
-  to be different for each board is the actual sending of requests to Telegram so I thought a library that additional 
+  Each library only supported a single type of Arduino and had different features implemented. The only thing that needs
+  to be different for each board is the actual sending of requests to Telegram so I thought a library that additional
   architectures or boards could be configured easily would be useful,
 */
 #include <UniversalTelegramBot.h>
@@ -97,105 +97,13 @@ NTPClient timeClient(ntpUDP, ntpServer, gmtOffset_sec, daylightOffset_sec);
 
   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-#define BOT_TOKEN "5935516261:AAE6L6-DRUcqIiR7MUOmNQwtCm_LToXObn0"
+#define BOT_TOKEN "5935516261:AAHmE1cO-aI1Uy0MTigdinUwgo8i_un4EAc"
 // Using CHAT_ID to lock user that can access your bot outside the Group,
 // get the id on @RawDataBot
 #define CHAT_ID "-1001825459630"
 const unsigned long BOT_MTBS = 1000; // mean time between scan messages
 unsigned long bot_lasttime;          // last time messages' scan has been done
 WiFiClientSecure secured_client;
-// Cert using to perform SSL connection to api.telegram.org update if it expires
-const char rootCA[] = R"=EOF=(
------BEGIN CERTIFICATE-----
-MIIGkDCCBXigAwIBAgIISiBgk2h4nDYwDQYJKoZIhvcNAQELBQAwgbQxCzAJBgNV
-BAYTAlVTMRAwDgYDVQQIEwdBcml6b25hMRMwEQYDVQQHEwpTY290dHNkYWxlMRow
-GAYDVQQKExFHb0RhZGR5LmNvbSwgSW5jLjEtMCsGA1UECxMkaHR0cDovL2NlcnRz
-LmdvZGFkZHkuY29tL3JlcG9zaXRvcnkvMTMwMQYDVQQDEypHbyBEYWRkeSBTZWN1
-cmUgQ2VydGlmaWNhdGUgQXV0aG9yaXR5IC0gRzIwHhcNMjIwODEwMTU1NjI4WhcN
-MjMwOTExMTU1NjI4WjAZMRcwFQYDVQQDDA4qLnRlbGVncmFtLm9yZzCCASIwDQYJ
-KoZIhvcNAQEBBQADggEPADCCAQoCggEBAKpIH/5PVT0RqF5iuaLJdPSSPQ/Zv4bb
-3vRlAAN99rtR9/diw4JV2QsnVmReHY111XoEjUeKhjuB+ETlh/VGO/NXNPcPn/J2
-LCtyMvOM1SDkwAJ2RGzN6Tj1Un9QHdtZ5yQqTk34p/dp4TnjkbcFGdZxNt2fXS68
-FmE0j5KqmO4ygBcwymwzJr10750H9o9E/d2Q5q4/9fHEYSyTLJEbiuSb/3QI3Wq8
-rjABm/OfINdik3Uo1tcKO3ROEgNEWdP581pBHvqDgCjLfjt6OFDDyrttUHVhIATm
-1EsHIhqG5VUbSbLJlsP3PQAnngqbILMw6DyvfLm2sc9vyQXDyZfYBe0CAwEAAaOC
-Az4wggM6MAwGA1UdEwEB/wQCMAAwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUF
-BwMCMA4GA1UdDwEB/wQEAwIFoDA4BgNVHR8EMTAvMC2gK6AphidodHRwOi8vY3Js
-LmdvZGFkZHkuY29tL2dkaWcyczEtNDM2Ni5jcmwwXQYDVR0gBFYwVDBIBgtghkgB
-hv1tAQcXATA5MDcGCCsGAQUFBwIBFitodHRwOi8vY2VydGlmaWNhdGVzLmdvZGFk
-ZHkuY29tL3JlcG9zaXRvcnkvMAgGBmeBDAECATB2BggrBgEFBQcBAQRqMGgwJAYI
-KwYBBQUHMAGGGGh0dHA6Ly9vY3NwLmdvZGFkZHkuY29tLzBABggrBgEFBQcwAoY0
-aHR0cDovL2NlcnRpZmljYXRlcy5nb2RhZGR5LmNvbS9yZXBvc2l0b3J5L2dkaWcy
-LmNydDAfBgNVHSMEGDAWgBRAwr0njsw0gzCiM9f7bLPwtCyAzjAnBgNVHREEIDAe
-gg4qLnRlbGVncmFtLm9yZ4IMdGVsZWdyYW0ub3JnMB0GA1UdDgQWBBRqvbbCZElv
-0pbnIM/DHudY2bUlfjCCAX8GCisGAQQB1nkCBAIEggFvBIIBawFpAHYA6D7Q2j71
-BjUy51covIlryQPTy9ERa+zraeF3fW0GvW4AAAGCiHjKNwAABAMARzBFAiEAm5J/
-LyrHaw+COLjPjSay0jgKCQRJ6zjYJhbvJt0aDcACIFka+9S/RP0xJPxT/TJ90qDv
-2jNyWtJt/+Cz75j2ImUGAHYANc8ZG7+xbFe/D61MbULLu7YnICZR6j/hKu+oA8M7
-1kwAAAGCiHjL0QAABAMARzBFAiA2KJz6YIAsKEoezBC8c1ENpEAPrurLk8xJlFjt
-Vms8IwIhAMCI1cxKpfqzlqzA4Wu4Du16pqP4U1Y4n5utSkwAe2lGAHcAejKMVNi3
-LbYg6jjgUh7phBZwMhOFTTvSK8E6V6NS61IAAAGCiHjMhgAABAMASDBGAiEA+TOM
-1gB0ORXEr1UA04LGc7jv5iTR9tIBnTytaPgj/gICIQCgQnG0/e3TaAlw+/lFbgkG
-PLf8Wd2KiM+afOWTFjHJxDANBgkqhkiG9w0BAQsFAAOCAQEAfobLSLYPbUyFJzyM
-FH30eAiqI/TwNZ2p5b/IDiznAIBW8iv4VdWJTh/m61qR/RSThHEcybxg5oBg+I45
-2EdI3/Tc0hKakcOkOw1Vy2ulT6TpM+oMEq0acIpi7LKe8J59D8EXmmvPHGoHUu/5
-+4skGktbS6xvFtSdnG5+tzQt3CO+KaCQ5o2arYOfBn0cZfzGUWkJjYqeUn/bkcnd
-ftP9KDjnUps+wOXs01g5cUcMv9+fx3bWw62R3+E97yHOt9cfcVVTfEOC9ji75q/2
-su6HY2jFAmRGHdZDPcsMYW6pl24vYxzYzrvAD3GH9on6ah9JTSLW2cHRzDPfUIWA
-06O1IQ==
------END CERTIFICATE-----
------BEGIN CERTIFICATE-----
-MIIE0DCCA7igAwIBAgIBBzANBgkqhkiG9w0BAQsFADCBgzELMAkGA1UEBhMCVVMx
-EDAOBgNVBAgTB0FyaXpvbmExEzARBgNVBAcTClNjb3R0c2RhbGUxGjAYBgNVBAoT
-EUdvRGFkZHkuY29tLCBJbmMuMTEwLwYDVQQDEyhHbyBEYWRkeSBSb290IENlcnRp
-ZmljYXRlIEF1dGhvcml0eSAtIEcyMB4XDTExMDUwMzA3MDAwMFoXDTMxMDUwMzA3
-MDAwMFowgbQxCzAJBgNVBAYTAlVTMRAwDgYDVQQIEwdBcml6b25hMRMwEQYDVQQH
-EwpTY290dHNkYWxlMRowGAYDVQQKExFHb0RhZGR5LmNvbSwgSW5jLjEtMCsGA1UE
-CxMkaHR0cDovL2NlcnRzLmdvZGFkZHkuY29tL3JlcG9zaXRvcnkvMTMwMQYDVQQD
-EypHbyBEYWRkeSBTZWN1cmUgQ2VydGlmaWNhdGUgQXV0aG9yaXR5IC0gRzIwggEi
-MA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC54MsQ1K92vdSTYuswZLiBCGzD
-BNliF44v/z5lz4/OYuY8UhzaFkVLVat4a2ODYpDOD2lsmcgaFItMzEUz6ojcnqOv
-K/6AYZ15V8TPLvQ/MDxdR/yaFrzDN5ZBUY4RS1T4KL7QjL7wMDge87Am+GZHY23e
-cSZHjzhHU9FGHbTj3ADqRay9vHHZqm8A29vNMDp5T19MR/gd71vCxJ1gO7GyQ5HY
-pDNO6rPWJ0+tJYqlxvTV0KaudAVkV4i1RFXULSo6Pvi4vekyCgKUZMQWOlDxSq7n
-eTOvDCAHf+jfBDnCaQJsY1L6d8EbyHSHyLmTGFBUNUtpTrw700kuH9zB0lL7AgMB
-AAGjggEaMIIBFjAPBgNVHRMBAf8EBTADAQH/MA4GA1UdDwEB/wQEAwIBBjAdBgNV
-HQ4EFgQUQMK9J47MNIMwojPX+2yz8LQsgM4wHwYDVR0jBBgwFoAUOpqFBxBnKLbv
-9r0FQW4gwZTaD94wNAYIKwYBBQUHAQEEKDAmMCQGCCsGAQUFBzABhhhodHRwOi8v
-b2NzcC5nb2RhZGR5LmNvbS8wNQYDVR0fBC4wLDAqoCigJoYkaHR0cDovL2NybC5n
-b2RhZGR5LmNvbS9nZHJvb3QtZzIuY3JsMEYGA1UdIAQ/MD0wOwYEVR0gADAzMDEG
-CCsGAQUFBwIBFiVodHRwczovL2NlcnRzLmdvZGFkZHkuY29tL3JlcG9zaXRvcnkv
-MA0GCSqGSIb3DQEBCwUAA4IBAQAIfmyTEMg4uJapkEv/oV9PBO9sPpyIBslQj6Zz
-91cxG7685C/b+LrTW+C05+Z5Yg4MotdqY3MxtfWoSKQ7CC2iXZDXtHwlTxFWMMS2
-RJ17LJ3lXubvDGGqv+QqG+6EnriDfcFDzkSnE3ANkR/0yBOtg2DZ2HKocyQetawi
-DsoXiWJYRBuriSUBAA/NxBti21G00w9RKpv0vHP8ds42pM3Z2Czqrpv1KrKQ0U11
-GIo/ikGQI31bS/6kA1ibRrLDYGCD+H1QQc7CoZDDu+8CL9IVVO5EFdkKrqeKM+2x
-LXY2JtwE65/3YR8V3Idv7kaWKK2hJn0KCacuBKONvPi8BDAB
------END CERTIFICATE-----
------BEGIN CERTIFICATE-----
-MIIDxTCCAq2gAwIBAgIBADANBgkqhkiG9w0BAQsFADCBgzELMAkGA1UEBhMCVVMx
-EDAOBgNVBAgTB0FyaXpvbmExEzARBgNVBAcTClNjb3R0c2RhbGUxGjAYBgNVBAoT
-EUdvRGFkZHkuY29tLCBJbmMuMTEwLwYDVQQDEyhHbyBEYWRkeSBSb290IENlcnRp
-ZmljYXRlIEF1dGhvcml0eSAtIEcyMB4XDTA5MDkwMTAwMDAwMFoXDTM3MTIzMTIz
-NTk1OVowgYMxCzAJBgNVBAYTAlVTMRAwDgYDVQQIEwdBcml6b25hMRMwEQYDVQQH
-EwpTY290dHNkYWxlMRowGAYDVQQKExFHb0RhZGR5LmNvbSwgSW5jLjExMC8GA1UE
-AxMoR28gRGFkZHkgUm9vdCBDZXJ0aWZpY2F0ZSBBdXRob3JpdHkgLSBHMjCCASIw
-DQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAL9xYgjx+lk09xvJGKP3gElY6SKD
-E6bFIEMBO4Tx5oVJnyfq9oQbTqC023CYxzIBsQU+B07u9PpPL1kwIuerGVZr4oAH
-/PMWdYA5UXvl+TW2dE6pjYIT5LY/qQOD+qK+ihVqf94Lw7YZFAXK6sOoBJQ7Rnwy
-DfMAZiLIjWltNowRGLfTshxgtDj6AozO091GB94KPutdfMh8+7ArU6SSYmlRJQVh
-GkSBjCypQ5Yj36w6gZoOKcUcqeldHraenjAKOc7xiID7S13MMuyFYkMlNAJWJwGR
-tDtwKj9useiciAF9n9T521NtYJ2/LOdYq7hfRvzOxBsDPAnrSTFcaUaz4EcCAwEA
-AaNCMEAwDwYDVR0TAQH/BAUwAwEB/zAOBgNVHQ8BAf8EBAMCAQYwHQYDVR0OBBYE
-FDqahQcQZyi27/a9BUFuIMGU2g/eMA0GCSqGSIb3DQEBCwUAA4IBAQCZ21151fmX
-WWcDYfF+OwYxdS2hII5PZYe096acvNjpL9DbWu7PdIxztDhC2gV7+AJ1uP2lsdeu
-9tfeE8tTEH6KRtGX+rcuKxGrkLAngPnon1rpN5+r5N9ss4UXnT3ZJE95kTXWXwTr
-gIOrmgIttRD02JDHBHNA7XIloKmf7J6raBKZV8aPEjoJpL1E/QYVN8Gb5DKj7Tjo
-2GTzLH4U/ALqn83/B2gX2yKQOC16jdFU8WnjXzPKej17CuPKf1855eJ1usV2GDPO
-LPAvTK33sefOT6jEm0pUBsV/fdUID+Ic/n4XuKxe9tQWskMJDE32p2u0mYRlynqI
-4uJEvlz36hz1
------END CERTIFICATE-----
-)=EOF=";
 UniversalTelegramBot bot(BOT_TOKEN, secured_client);
 
 // Import lib sensor DHT11
@@ -331,7 +239,6 @@ void bot_setup()
 // {
 // }
 
-
 void setup()
 {
   Serial.begin(9600);
@@ -363,7 +270,7 @@ void setup()
   pinMode(switch_lampuFertilizer, INPUT_PULLUP);
 
   // Defining States to set on boot
-  digitalWrite(switch_pin, LOW);
+  digitalWrite(switch_pin, HIGH);
   digitalWrite(relay1_waterPump, state1_waterPump);
   digitalWrite(relay2_lampuFertilizer, state2_lampuFertilizer);
 
@@ -382,7 +289,7 @@ void setup()
   Serial.println(WiFi.localIP());
 
   // secured_client.setCACert(TELEGRAM_CERTIFICATE_ROOT); // Add root certificate for api.telegram.org
-  secured_client.setCACert(rootCA);
+  secured_client.setCACert(TELEGRAM_CERTIFICATE_ROOT);
   // secured_client.getPeerCertificate();
   secured_client.setInsecure();
 
@@ -505,11 +412,11 @@ void loop()
         // Prepare the buttons
         String keyboardJson = "["; // start Json
         // updateInlineKeyboard
-        keyboardJson += "[{ \"text\" : \"08 AM to 01 PM is ";
+        keyboardJson += "[{ \"text\" : \"08 AM to 02 PM is ";
         keyboardJson += (scheduleEnabled ? "ON" : "OFF");
         keyboardJson += "\", \"callback_data\" : \"/scheduleButton\" }]";
         // updateInlineKeyboard
-        keyboardJson += ", [{ \"text\" : \"schedule example is ";
+        keyboardJson += ", [{ \"text\" : \"schedule demo is ";
         keyboardJson += (scheduleEnabled2 ? "ON" : "OFF");
         keyboardJson += "\", \"callback_data\" : \"/scheduleButton2\" }]";
         keyboardJson += "]"; // end Json
@@ -720,7 +627,7 @@ void loop()
         keyboardJson += (scheduleEnabled ? "ON" : "OFF");
         keyboardJson += "\", \"callback_data\" : \"/scheduleButton\" }]";
         // updateInlineKeyboard
-        keyboardJson += ", [{ \"text\" : \"schedule example is ";
+        keyboardJson += ", [{ \"text\" : \"schedule demo is ";
         keyboardJson += (scheduleEnabled2 ? "ON" : "OFF");
         keyboardJson += "\", \"callback_data\" : \"/scheduleButton2\" }]";
         keyboardJson += "]"; // end Json
@@ -735,8 +642,6 @@ void loop()
       Serial.println("got response");
       // handleNewMessages(numNewMessages);
       numNewMessages = bot.getUpdates(bot.last_message_received + 1);
-      
-
     }
 
     bot_lasttime = millis();
@@ -798,7 +703,7 @@ void loop()
         Serial.println("waterPump turned on (Scheduler).");
       }
       // (currentSecond > 15 && currentMinute != previousMinute)
-      else if (currentSecond > 15 )
+      else if (currentSecond > 15)
       {
         // Turn off water pump for 30 min
         digitalWrite(relay1_waterPump, HIGH);
@@ -808,192 +713,174 @@ void loop()
     }
   }
 
-    // scheduleEnabled2 for demo testing only
-    bool lastScheduleEnabled2 = false;
-    bool flagBtn2 = false;
-    if (scheduleEnabled2 != lastScheduleEnabled2)
-    {
-      lastScheduleEnabled2 = scheduleEnabled2;
+  // scheduleEnabled2 for demo testing only
+  bool lastScheduleEnabled2 = false;
+  bool flagBtn2 = false;
+  if (scheduleEnabled2 != lastScheduleEnabled2)
+  {
+    lastScheduleEnabled2 = scheduleEnabled2;
 
-      if (digitalRead(switch_pin) == HIGH)
+    if (digitalRead(switch_pin) == HIGH)
+    {
+      // Set flag to true if switch_pin is HIGH
+      flagBtn2 = true;
+    }
+    else
+    {
+      flagBtn2 = false;
+    }
+
+    if (flagBtn2 && scheduleEnabled2 && hour(now) >= 8 && hour(now) < 24)
+    {
+      // Debugging for an error
+      // Serial.println(flagBtn);
+      // Serial.println(scheduleEnabled2);
+      // Serial.println(hour(now));
+      // Serial.println(switch_pin);
+      // Serial.println(timeinfo.tm_hour);
+      // BH1750 reading affected by lux value to toggle lampuFertilizer
+      float lux = lightMeter.readLightLevel();
+      if (lux < 3780)
       {
-        // Set flag to true if switch_pin is HIGH
-        flagBtn2 = true;
+        digitalWrite(relay2_lampuFertilizer, LOW);
+        state2_lampuFertilizer = true;
+        Serial.println("lampuFertilizer turned on (Scheduler).");
       }
       else
       {
-        flagBtn2 = false;
+        digitalWrite(relay2_lampuFertilizer, HIGH);
+        state2_lampuFertilizer = false;
+        Serial.println("lampuFertilizer turned off (Scheduler).");
       }
 
-      if (flagBtn2 && scheduleEnabled2 && hour(now) >= 8 && hour(now) < 24)
+      // Check if it's time to turn on the water pump
+      int previousMinute = 0;
+      int currentSecond = second(now);
+      int currentMinute = minute(now);
+      Serial.print("detik ke : ");
+      Serial.println(currentSecond);
+      Serial.print("menit ke : ");
+      Serial.println(currentMinute);
+      if (currentSecond <= 15)
       {
-        // Debugging for an error
-        // Serial.println(flagBtn);
-        // Serial.println(scheduleEnabled2);
-        // Serial.println(hour(now));
-        // Serial.println(switch_pin);
-        // Serial.println(timeinfo.tm_hour);
-        // BH1750 reading affected by lux value to toggle lampuFertilizer
-        float lux = lightMeter.readLightLevel();
-        if (lux < 3780)
-        {
-          digitalWrite(relay2_lampuFertilizer, LOW);
-          state2_lampuFertilizer = true;
-          Serial.println("lampuFertilizer turned on (Scheduler).");
-        }
-        else
-        {
-          digitalWrite(relay2_lampuFertilizer, HIGH);
-          state2_lampuFertilizer = false;
-          Serial.println("lampuFertilizer turned off (Scheduler).");
-        }
-
-        // Check if it's time to turn on the water pump
-        int previousMinute = 0;
-        int currentSecond = second(now);
-        int currentMinute = minute(now);
-        Serial.print("detik ke : ");
-        Serial.println(currentSecond);
-        Serial.print("menit ke : ");
-        Serial.println(currentMinute);
-        if (currentSecond <= 15)
-        {
-          // Turn on water pump for 15 secs
-          digitalWrite(relay1_waterPump, LOW);
-          state1_waterPump = true;
-          Serial.println("waterPump turned on (Scheduler).");
-        }
-        else if (currentSecond > 15 && currentMinute != previousMinute)
-        {
-          // Turn off water pump for 45 secs
-          digitalWrite(relay1_waterPump, HIGH);
-          state1_waterPump = false;
-          Serial.println("waterPump turned off (Scheduler).");
-        }
+        // Turn on water pump for 15 secs
+        digitalWrite(relay1_waterPump, LOW);
+        state1_waterPump = true;
+        Serial.println("waterPump turned on (Scheduler).");
       }
-    }
-    // Control Manual GPIO Switch
-    if (WiFi.status() != WL_CONNECTED || WiFi.status() == WL_CONNECTED)
-    {
-      bool flag = false;
-      bool prevSwitchState = digitalRead(switch_pin);
-      if (prevSwitchState == LOW)
+      else if (currentSecond > 15 && currentMinute != previousMinute)
       {
-        flag = true;
-        if (digitalRead(switch_waterPump) == LOW)
-        {
-          digitalWrite(relay1_waterPump, LOW);
-          state1_waterPump = true;
-          Serial.println("waterPump turned on (Manual).");
-        }
-        else
-        {
-          digitalWrite(relay1_waterPump, HIGH);
-          state1_waterPump = false;
-          Serial.println("waterPump turned off (Manual).");
-        }
-        // LampuFertilizer
-        if (digitalRead(switch_lampuFertilizer) == LOW)
-        {
-          digitalWrite(relay2_lampuFertilizer, LOW);
-          state2_lampuFertilizer = true;
-          Serial.println("lampuFertilizer turned on (Manual).");
-        }
-        else
-        {
-          digitalWrite(relay2_lampuFertilizer, HIGH);
-          state2_lampuFertilizer = false;
-          Serial.println("lampuFertilizer turned off (Manual).");
-        }
+        // Turn off water pump for 45 secs
+        digitalWrite(relay1_waterPump, HIGH);
+        state1_waterPump = false;
+        Serial.println("waterPump turned off (Scheduler).");
       }
-      else if (digitalRead(switch_pin) != prevSwitchState && flag == false)
-      {
-        flag = true;
-        // stop current code here
-      }
-
-      if (digitalRead(switch_pin) == HIGH)
-      {
-        flag = false;
-      }
-
-      prevSwitchState = digitalRead(switch_pin);
-    }
-
-    // // get current time lcd not used
-    // struct tm timeinfo2;
-    // if (!getLocalTime(&timeinfo2))
-    // {
-    //   Serial.println("Failed to obtain time");
-    //   return;
-    // }
-    // char formattedDate2[7];
-    // strftime(formattedDate2, sizeof(formattedDate2), "%d %b", &timeinfo2);
-    // // Serial.println(formattedDate);
-    // char formattedTime2[6];
-    // strftime(formattedTime2, sizeof(formattedTime2), "%H:%M", &timeinfo2);
-    // // Serial.println(formattedTime);
-
-    // Formatted date and time to display on LCD
-    char formattedDate[7];
-    char formattedTime[6];
-    // sprintf(formattedDate, "%02d %03d", day(now), month(now));
-    strftime(formattedDate, sizeof(formattedDate), "%d %b", &timeinfo);
-    sprintf(formattedTime, "%02d:%02d", hour(now), minute(now));
-
-    // Define the lowState and highState variables
-    String lowState = "on";
-    String highState = "off";
-
-    // Get the state of the waterPump and lampuFertilizer variables as a string
-    String waterPumpState = state1_waterPump == LOW ? lowState : highState;
-    String lampuFertilizerState = state2_lampuFertilizer == LOW ? lowState : highState;
-
-    sensorStartTime = millis();
-    // check time difference and delay if necessary
-    // Reading temperature or humidity takes about 250 milliseconds!
-    // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
-    // Read temperature as Celsius (the default)
-    float temperature = dht.readTemperature();
-    float humidity = dht.readHumidity();
-    // Read temperature as Fahrenheit (isFahrenheit = true)
-    // float f = dht.readTemperature(true);
-    // Read light intensity
-    float lux = lightMeter.readLightLevel();
-
-    // Print the sensor data on the LCD display
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("Temp: ");
-    lcd.print(temperature);
-    lcd.print(" C ");
-    lcd.print(formattedDate);
-
-    lcd.setCursor(0, 1);
-    lcd.print("Humi: ");
-    lcd.print(humidity);
-    lcd.print(" % ");
-    lcd.print(formattedTime);
-
-    lcd.setCursor(0, 2);
-    lcd.print("Lux : ");
-    lcd.print(lux);
-    lcd.print(" lx");
-
-    lcd.setCursor(0, 3);
-    lcd.print("Pump: ");
-    lcd.print(waterPumpState);
-    lcd.print(" Lamp: ");
-    lcd.print(lampuFertilizerState);
-
-    unsigned long sensorEndTime = millis();
-    if (sensorEndTime - sensorStartTime < sensorDelay)
-    {
-      delay(sensorDelay - (sensorEndTime - sensorStartTime));
-    }
-    if (isnan(humidity) || isnan(temperature) /* || isnan(f) */)
-    {
-      Serial.println(F("Failed to read from DHT sensor!"));
-      return;
     }
   }
+  // Control Manual GPIO Switch
+  if (WiFi.status() != WL_CONNECTED || WiFi.status() == WL_CONNECTED)
+  {
+    if (digitalRead(switch_waterPump) == LOW)
+    {
+      digitalWrite(relay1_waterPump, LOW);
+      state1_waterPump = true;
+      Serial.println("waterPump turned on (Manual).");
+    }
+    else
+    {
+      digitalWrite(relay1_waterPump, HIGH);
+      state1_waterPump = false;
+      Serial.println("waterPump turned off (Manual).");
+    }
+    // LampuFertilizer
+    if (digitalRead(switch_lampuFertilizer) == LOW)
+    {
+      digitalWrite(relay2_lampuFertilizer, LOW);
+      state2_lampuFertilizer = true;
+      Serial.println("lampuFertilizer turned on (Manual).");
+    }
+    else
+    {
+      digitalWrite(relay2_lampuFertilizer, HIGH);
+      state2_lampuFertilizer = false;
+      Serial.println("lampuFertilizer turned off (Manual).");
+    }
+  }
+
+  // // get current time lcd not used
+  // struct tm timeinfo2;
+  // if (!getLocalTime(&timeinfo2))
+  // {
+  //   Serial.println("Failed to obtain time");
+  //   return;
+  // }
+  // char formattedDate2[7];
+  // strftime(formattedDate2, sizeof(formattedDate2), "%d %b", &timeinfo2);
+  // // Serial.println(formattedDate);
+  // char formattedTime2[6];
+  // strftime(formattedTime2, sizeof(formattedTime2), "%H:%M", &timeinfo2);
+  // // Serial.println(formattedTime);
+
+  // Formatted date and time to display on LCD
+  char formattedDate[7];
+  char formattedTime[6];
+  // sprintf(formattedDate, "%02d %03d", day(now), month(now));
+  strftime(formattedDate, sizeof(formattedDate), "%d %b", &timeinfo);
+  sprintf(formattedTime, "%02d:%02d", hour(now), minute(now));
+
+  // Define the lowState and highState variables
+  String lowState = "on";
+  String highState = "off";
+
+  // Get the state of the waterPump and lampuFertilizer variables as a string
+  String waterPumpState = state1_waterPump == true ? lowState : highState;
+  String lampuFertilizerState = state2_lampuFertilizer == true ? lowState : highState;
+
+  sensorStartTime = millis();
+  // check time difference and delay if necessary
+  // Reading temperature or humidity takes about 250 milliseconds!
+  // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+  // Read temperature as Celsius (the default)
+  float temperature = dht.readTemperature();
+  float humidity = dht.readHumidity();
+  // Read temperature as Fahrenheit (isFahrenheit = true)
+  // float f = dht.readTemperature(true);
+  // Read light intensity
+  float lux = lightMeter.readLightLevel();
+
+  // Print the sensor data on the LCD display
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Temp: ");
+  lcd.print(temperature);
+  lcd.print(" C ");
+  lcd.print(formattedDate);
+
+  lcd.setCursor(0, 1);
+  lcd.print("Humi: ");
+  lcd.print(humidity);
+  lcd.print(" % ");
+  lcd.print(formattedTime);
+
+  lcd.setCursor(0, 2);
+  lcd.print("Lux : ");
+  lcd.print(lux);
+  lcd.print(" lx");
+
+  lcd.setCursor(0, 3);
+  lcd.print("Pump: ");
+  lcd.print(waterPumpState);
+  lcd.print(" Lamp: ");
+  lcd.print(lampuFertilizerState);
+
+  unsigned long sensorEndTime = millis();
+  if (sensorEndTime - sensorStartTime < sensorDelay)
+  {
+    delay(sensorDelay - (sensorEndTime - sensorStartTime));
+  }
+  if (isnan(humidity) || isnan(temperature) /* || isnan(f) */)
+  {
+    Serial.println(F("Failed to read from DHT sensor!"));
+    return;
+  }
+}
