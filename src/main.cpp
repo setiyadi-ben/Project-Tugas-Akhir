@@ -21,6 +21,17 @@
 #include <WiFi.h>
 #include <WiFiUdp.h>
 #include <WiFiClientSecure.h>
+
+/*
+ESP32Ping
+https://github.com/marian-craciunescu/ESP32Ping
+
+Let the ESP32Ping ping a remote machine.
+#Note that this is a port from https://github.com/dancol90/ESP8266Ping With this library an ESP32Ping can ping 
+a remote machine and know if it's reachable. It provide some basic measurements on ping messages (avg response time).
+*/
+#include <ESP32Ping.h> //Ping watcher library to check keep-alive connectivity
+
 /*
   witnessmenow/Universal-Arduino-Telegram-Bot
 
@@ -319,6 +330,31 @@ void loop()
   timeClient.update();
   time_t now = timeClient.getEpochTime();
   tm timeinfo = *localtime(&now); // Note that the localtime() function is used to convert the epoch time
+
+  if (WiFi.status() == WL_CONNECTED)
+  {
+    // int32_t rssi = WiFi.RSSI();
+    // Serial.print("Signal Strength (RSSI): ");
+    // Serial.print(rssi);
+    // Serial.println(" dBm");
+  }
+  else
+  {
+    Serial.println("WiFi disconnected");
+  }
+  if (second(now)<=59)
+  {
+    bool ret = Ping.ping("api.telegram.org");
+    float avg_time_ms = Ping.averageTime();
+    Serial.print("reply from api.telegram.org ");
+    Serial.print(avg_time_ms);
+    Serial.println(" ms");
+    // WiFi signal strength
+    int32_t rssi = WiFi.RSSI();
+    Serial.print("Signal Strength (RSSI): ");
+    Serial.print(rssi);
+    Serial.println(" dBm");
+  }
 
   //  Control & Monitoring Switch using Telegram Bot
   if (millis() - bot_lasttime > BOT_MTBS)
@@ -654,17 +690,17 @@ void loop()
   {
     lastScheduleEnabled = scheduleEnabled;
 
-    if (digitalRead(switch_pin) == HIGH)
-    {
-      // Set flag to true if switch_pin is HIGH
-      flagBtn = true;
-    }
-    else
-    {
-      flagBtn = false;
-    }
+    // if (digitalRead(switch_pin) == HIGH)
+    // {
+    //   // Set flag to true if switch_pin is HIGH
+    //   flagBtn = true;
+    // }
+    // else
+    // {
+    //   flagBtn = false;
+    // }
 
-    if (flagBtn && scheduleEnabled && hour(now) >= 8 && hour(now) < 14)
+    if (digitalRead(switch_pin) == HIGH && scheduleEnabled && hour(now) >= 8 && hour(now) < 14)
     {
       // Debugging for an error
       // Serial.println(flagBtn);
@@ -677,13 +713,13 @@ void loop()
       if (lux < 3780)
       {
         digitalWrite(relay2_lampuFertilizer, LOW);
-        state2_lampuFertilizer = true;
+        state2_lampuFertilizer = false;
         Serial.println("lampuFertilizer turned on (Scheduler).");
       }
       else
       {
         digitalWrite(relay2_lampuFertilizer, HIGH);
-        state2_lampuFertilizer = false;
+        state2_lampuFertilizer = true;
         Serial.println("lampuFertilizer turned off (Scheduler).");
       }
 
@@ -720,17 +756,17 @@ void loop()
   {
     lastScheduleEnabled2 = scheduleEnabled2;
 
-    if (digitalRead(switch_pin) == HIGH)
-    {
-      // Set flag to true if switch_pin is HIGH
-      flagBtn2 = true;
-    }
-    else
-    {
-      flagBtn2 = false;
-    }
+    // if (digitalRead(switch_pin) == HIGH)
+    // {
+    //   // Set flag to true if switch_pin is HIGH
+    //   flagBtn2 = true;
+    // }
+    // else
+    // {
+    //   flagBtn2 = false;
+    // }
 
-    if (flagBtn2 && scheduleEnabled2 && hour(now) >= 8 && hour(now) < 24)
+    if (digitalRead(switch_pin) == HIGH && scheduleEnabled2 && hour(now) >= 8 && hour(now) < 24)
     {
       // Debugging for an error
       // Serial.println(flagBtn);
@@ -743,13 +779,13 @@ void loop()
       if (lux < 3780)
       {
         digitalWrite(relay2_lampuFertilizer, LOW);
-        state2_lampuFertilizer = true;
+        state2_lampuFertilizer = false;
         Serial.println("lampuFertilizer turned on (Scheduler).");
       }
       else
       {
         digitalWrite(relay2_lampuFertilizer, HIGH);
-        state2_lampuFertilizer = false;
+        state2_lampuFertilizer = true;
         Serial.println("lampuFertilizer turned off (Scheduler).");
       }
 
@@ -778,7 +814,7 @@ void loop()
     }
   }
   // Control Manual GPIO Switch
-  if (WiFi.status() != WL_CONNECTED || WiFi.status() == WL_CONNECTED)
+  if (digitalRead(switch_pin) == LOW) //&& WiFi.status() != WL_CONNECTED || WiFi.status() == WL_CONNECTED
   {
     if (digitalRead(switch_waterPump) == LOW)
     {
@@ -804,6 +840,20 @@ void loop()
       digitalWrite(relay2_lampuFertilizer, HIGH);
       state2_lampuFertilizer = false;
       Serial.println("lampuFertilizer turned off (Manual).");
+    }
+  }
+  else
+  {
+    Serial.println("Bot Telegram mode.");
+    if (digitalRead(switch_waterPump) == HIGH)
+    {
+      digitalWrite(relay1_waterPump, HIGH);
+      state1_waterPump = false;
+    }
+    if (digitalRead(switch_lampuFertilizer) == HIGH)
+    {
+      digitalWrite(relay2_lampuFertilizer, HIGH);
+      state2_lampuFertilizer = false;
     }
   }
 
@@ -836,7 +886,7 @@ void loop()
   String waterPumpState = state1_waterPump == true ? lowState : highState;
   String lampuFertilizerState = state2_lampuFertilizer == true ? lowState : highState;
 
-  sensorStartTime = millis();
+  // sensorStartTime = millis();
   // check time difference and delay if necessary
   // Reading temperature or humidity takes about 250 milliseconds!
   // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
@@ -873,11 +923,11 @@ void loop()
   lcd.print(" Lamp: ");
   lcd.print(lampuFertilizerState);
 
-  unsigned long sensorEndTime = millis();
-  if (sensorEndTime - sensorStartTime < sensorDelay)
-  {
-    delay(sensorDelay - (sensorEndTime - sensorStartTime));
-  }
+  // unsigned long sensorEndTime = millis();
+  // if (sensorEndTime - sensorStartTime < sensorDelay)
+  // {
+  //   delay(sensorDelay - (sensorEndTime - sensorStartTime));
+  // }
   if (isnan(humidity) || isnan(temperature) /* || isnan(f) */)
   {
     Serial.println(F("Failed to read from DHT sensor!"));
