@@ -32,8 +32,12 @@
 ## Bugs
 - Saat koneksi internet _unstable_, terkadang akan memunculkan _duplicate messages_.
 - ~~Saat proses _booting_, relay akan menyala di awal hingga program selesai dimuat (khusus untuk konfigurasi relay _Normally Close_ atau _NC_).~~
-- Jika pesan balasan dari bot Telegram lambat atau tidak muncul sama sekali perhatikan pada konfigurasi antenna ESP32.
+- Jika pesan balasan dari bot telegram lambat atau tidak muncul sama sekali perhatikan pada konfigurasi antenna ESP32.
 - Tidak bisa melayani request dalam jumlah banyak kecuali dengan cara bergantian.
+- Perintah /schedule pada bot telegram kemungkinan akan terganggu jika koneksi WiFi terputus dikarenakan menggunakan sinkronisasi waktu _NTP_.
+- ~~Masalah perintah _/switch_ pada bot telegram.~~
+- Masalah perintah /schedule dimana aktuator tidak berhenti setelah perintah stop dijalankan.
+
 (in-progress)
 ## Spesifikasi
 - _Panel box dimensions_ (cm, cm, cm, cm).

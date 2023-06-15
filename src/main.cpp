@@ -197,8 +197,8 @@ const int switch_pin = 5;
 // #define switch_lampuFertilizer 12
 
 // relay default state (my relay configuration is Normally Closed)
-bool state1_waterPump = HIGH;
-bool state2_lampuFertilizer = HIGH;
+bool state1_waterPump = true;
+bool state2_lampuFertilizer = true;
 bool state3_solenoidValve = LOW;
 
 unsigned long sensorStartTime;
@@ -282,8 +282,8 @@ void setup()
 
   // Defining States to set on boot
   digitalWrite(switch_pin, HIGH);
-  digitalWrite(relay1_waterPump, state1_waterPump);
-  digitalWrite(relay2_lampuFertilizer, state2_lampuFertilizer);
+  digitalWrite(relay1_waterPump, HIGH);
+  digitalWrite(relay2_lampuFertilizer, HIGH);
 
   // attempt to connect to Wifi network:
   Serial.print("Connecting to Wifi SSID ");
@@ -475,8 +475,8 @@ void loop()
       String highState = "off";
 
       // Get the state of the waterPump and lampuFertilizer variables as a string
-      String waterPumpState = state1_waterPump == LOW ? lowState : highState;
-      String lampuFertilizerState = state2_lampuFertilizer == LOW ? lowState : highState;
+      String waterPumpState = state1_waterPump == true ? lowState : highState;
+      String lampuFertilizerState = state2_lampuFertilizer == true ? lowState : highState;
 
       String answer;
       for (int i = 0; i < numNewMessages; i++)
@@ -537,7 +537,7 @@ void loop()
       }
 
       // CALLBACK MANUAL SWITCH BUTTON
-      if (text == "/switchButton1")
+      if (digitalRead(switch_pin) == HIGH && text == "/switchButton1")
       {
         // Toggle the ledState and update the LED itself
         // ledState = !ledState;
@@ -572,7 +572,7 @@ void loop()
         bot.sendMessageWithInlineKeyboard(chat_id, msg, "Markdown", keyboardJson, message_id);
       }
 
-      if (text == "/switchButton2")
+      if (digitalRead(switch_pin) == HIGH && text == "/switchButton2")
       {
         // Toggle the ledState and update the LED itself
         // ledState = !ledState;
@@ -713,13 +713,13 @@ void loop()
       if (lux < 3780)
       {
         digitalWrite(relay2_lampuFertilizer, LOW);
-        state2_lampuFertilizer = false;
+        state2_lampuFertilizer = true;
         Serial.println("lampuFertilizer turned on (Scheduler).");
       }
       else
       {
         digitalWrite(relay2_lampuFertilizer, HIGH);
-        state2_lampuFertilizer = true;
+        state2_lampuFertilizer = false;
         Serial.println("lampuFertilizer turned off (Scheduler).");
       }
 
@@ -779,13 +779,13 @@ void loop()
       if (lux < 3780)
       {
         digitalWrite(relay2_lampuFertilizer, LOW);
-        state2_lampuFertilizer = false;
+        state2_lampuFertilizer = true;
         Serial.println("lampuFertilizer turned on (Scheduler).");
       }
       else
       {
         digitalWrite(relay2_lampuFertilizer, HIGH);
-        state2_lampuFertilizer = true;
+        state2_lampuFertilizer = false;
         Serial.println("lampuFertilizer turned off (Scheduler).");
       }
 
