@@ -27,7 +27,7 @@ ESP32Ping
 https://github.com/marian-craciunescu/ESP32Ping
 
 Let the ESP32Ping ping a remote machine.
-#Note that this is a port from https://github.com/dancol90/ESP8266Ping With this library an ESP32Ping can ping 
+#Note that this is a port from https://github.com/dancol90/ESP8266Ping With this library an ESP32Ping can ping
 a remote machine and know if it's reachable. It provide some basic measurements on ping messages (avg response time).
 */
 #include <ESP32Ping.h> //Ping watcher library to check keep-alive connectivity
@@ -338,7 +338,7 @@ void loop()
   {
     Serial.println("WiFi disconnected");
   }
-  if (second(now)<=59)
+  if (second(now) <= 59)
   {
     bool ret = Ping.ping("api.telegram.org");
     float avg_time_ms = Ping.averageTime();
@@ -410,11 +410,11 @@ void loop()
 
         String keyboardJson = "["; // start Json
         // updateInlineKeyboard for waterPump
-        keyboardJson += "[{ \"text\" : \"_Water pump is_ ";
+        keyboardJson += "[{ \"text\" : \"Water pump is ";
         keyboardJson += (state1_waterPump ? "ON" : "OFF");
         keyboardJson += "\", \"callback_data\" : \"/onWaterpump\" }]";
         // updateInlineKeyboard for lampuFertilizer
-        keyboardJson += ", [{ \"text\" : \"Lampu _fertilizer is_ ";
+        keyboardJson += ", [{ \"text\" : \"Lampu fertilizer is ";
         keyboardJson += (state2_lampuFertilizer ? "ON" : "OFF");
         keyboardJson += "\", \"callback_data\" : \"/onLampuFertilizer\" }]";
         // keyboardJson += ", [{ \"text\" : \"Send message\", \"callback_data\" : \"/sendMessage\" }]";
@@ -434,11 +434,11 @@ void loop()
         // Prepare the buttons
         String keyboardJson = "["; // start Json
         // updateInlineKeyboard
-        keyboardJson += "[{ \"text\" : \"08 AM to 02 PM _is_ ";
+        keyboardJson += "[{ \"text\" : \"08 AM to 02 PM is ";
         keyboardJson += (scheduleEnabled ? "ON" : "OFF");
         keyboardJson += "\", \"callback_data\" : \"/scheduleButton\" }]";
         // updateInlineKeyboard
-        keyboardJson += ", [{ \"text\" : \"_Schedule demo is_ ";
+        keyboardJson += ", [{ \"text\" : \"Schedule demo is ";
         keyboardJson += (scheduleEnabled2 ? "ON" : "OFF");
         keyboardJson += "\", \"callback_data\" : \"/scheduleButton2\" }]";
         keyboardJson += "]"; // end Json
@@ -618,8 +618,19 @@ void loop()
       // CALLBACK SCHEDULED BUTTON
       if (text == "/scheduleButton")
       {
-        // Togle TRUE & FALSE statements
+        // Toggle TRUE & FALSE statements
         scheduleEnabled = !scheduleEnabled;
+        // Debug statements
+        if (scheduleEnabled == true)
+        {
+          Serial.print(scheduleEnabled);
+          Serial.println(" - Scheduler activated.");
+        }
+        else
+        {
+          Serial.print(scheduleEnabled);
+          Serial.println(" - Scheduler deactivated.");
+        }
 
         // Now we can UPDATE the message, lets prepare it for sending:
         msg = "Halo " + from_name + ", perintah berhasil dijalankan.\n";
@@ -644,9 +655,19 @@ void loop()
 
       if (text == "/scheduleButton2")
       {
-        // Togle TRUE & FALSE statements
+        // Toggle TRUE & FALSE statements
         scheduleEnabled2 = !scheduleEnabled2;
-        Serial.println(scheduleEnabled2);
+        // Debug statements
+        if (scheduleEnabled2 == true)
+        {
+          Serial.print(scheduleEnabled2);
+          Serial.println(" - Scheduler activated.");
+        }
+        else
+        {
+          Serial.print(scheduleEnabled2);
+          Serial.println(" - Scheduler deactivated.");
+        }
 
         // Now we can UPDATE the message, lets prepare it for sending:
         msg = "Halo " + from_name + ", perintah berhasil dijalankan.\n";
@@ -660,7 +681,7 @@ void loop()
         keyboardJson += (scheduleEnabled ? "ON" : "OFF");
         keyboardJson += "\", \"callback_data\" : \"/scheduleButton\" }]";
         // updateInlineKeyboard
-        keyboardJson += ", [{ \"text\" : \"schedule demo is ";
+        keyboardJson += ", [{ \"text\" : \"Schedule demo is ";
         keyboardJson += (scheduleEnabled2 ? "ON" : "OFF");
         keyboardJson += "\", \"callback_data\" : \"/scheduleButton2\" }]";
         keyboardJson += "]"; // end Json
@@ -682,25 +703,12 @@ void loop()
 
   // scheduleEnabled for field testing only
   bool lastScheduleEnabled = false;
-  bool flagBtn = false;
   if (scheduleEnabled != lastScheduleEnabled)
   {
     lastScheduleEnabled = scheduleEnabled;
-
-    // if (digitalRead(switch_pin) == HIGH)
-    // {
-    //   // Set flag to true if switch_pin is HIGH
-    //   flagBtn = true;
-    // }
-    // else
-    // {
-    //   flagBtn = false;
-    // }
-
     if (digitalRead(switch_pin) == HIGH && scheduleEnabled && hour(now) >= 8 && hour(now) < 14)
     {
       // Debugging for an error
-      // Serial.println(flagBtn);
       // Serial.println(scheduleEnabled2);
       // Serial.println(hour(now));
       // Serial.println(switch_pin);
@@ -745,28 +753,23 @@ void loop()
       }
     }
   }
+  else if (digitalRead(switch_pin) == HIGH && scheduleEnabled2 != true)
+  {
+    // Terminating the scheduler
+    digitalWrite(relay2_lampuFertilizer, HIGH);
+    state2_lampuFertilizer = false;
+    digitalWrite(relay1_waterPump, HIGH);
+    state1_waterPump = false;
+  }
 
   // scheduleEnabled2 for demo testing only
   bool lastScheduleEnabled2 = false;
-  bool flagBtn2 = false;
   if (scheduleEnabled2 != lastScheduleEnabled2)
   {
     lastScheduleEnabled2 = scheduleEnabled2;
-
-    // if (digitalRead(switch_pin) == HIGH)
-    // {
-    //   // Set flag to true if switch_pin is HIGH
-    //   flagBtn2 = true;
-    // }
-    // else
-    // {
-    //   flagBtn2 = false;
-    // }
-
     if (digitalRead(switch_pin) == HIGH && scheduleEnabled2 && hour(now) >= 8 && hour(now) < 24)
     {
       // Debugging for an error
-      // Serial.println(flagBtn);
       // Serial.println(scheduleEnabled2);
       // Serial.println(hour(now));
       // Serial.println(switch_pin);
@@ -810,6 +813,15 @@ void loop()
       }
     }
   }
+  else if (digitalRead(switch_pin) == HIGH && scheduleEnabled2 != true)
+  {
+    // Terminating the scheduler
+    digitalWrite(relay2_lampuFertilizer, HIGH);
+    state2_lampuFertilizer = false;
+    digitalWrite(relay1_waterPump, HIGH);
+    state1_waterPump = false;
+  }
+
   // Control Manual GPIO Switch
   if (digitalRead(switch_pin) == LOW) //&& WiFi.status() != WL_CONNECTED || WiFi.status() == WL_CONNECTED
   {

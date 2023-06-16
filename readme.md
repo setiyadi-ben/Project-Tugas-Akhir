@@ -25,18 +25,20 @@
 - Mengendalikan kondisi lampu _fertilizer_ ( LOW | HIGH ).
 - Kendali _hybrid_ menggunakan perintah bot telegram maupun _Manual GPIO Switch_.
 - Kendali kondisi otomatis melalui perintah _/schedule_ melalui bot telegram.
-- _Monitoring_ suhu dan kelembapan melalui bot telegram.
-- _Monitoring_ intensitas cahaya melalui bot telegram.
+- _Monitoring_ suhu dan kelembapan melalui bot telegram dan layar _LCD_.
+- _Monitoring_ intensitas cahaya melalui bot telegram dan layar _LCD_.
 - Sistem dapat bekerja di saat internet putus sekalipun dengan syarat pada kondisi awal atau setelah reset pernah terhubung ke internet satu kali.
 
 ## Bugs
 - Saat koneksi internet _unstable_, terkadang akan memunculkan _duplicate messages_.
 - ~~Saat proses _booting_, relay akan menyala di awal hingga program selesai dimuat (khusus untuk konfigurasi relay _Normally Close_ atau _NC_).~~
-- Jika pesan balasan dari bot telegram lambat atau tidak muncul sama sekali perhatikan pada konfigurasi antenna ESP32.
+- Jika pesan balasan dari bot telegram lambat atau tidak muncul sama sekali perhatikan pada konfigurasi _antenna_ ESP32.
 - Tidak bisa melayani request dalam jumlah banyak kecuali dengan cara bergantian.
+- Tergantung dari kelancaran koneksi internet, _button_ kadang - kadang memerlukan 2 kali penekanan hingga dapat berfungsi.
 - Perintah /schedule pada bot telegram kemungkinan akan terganggu jika koneksi WiFi terputus dikarenakan menggunakan sinkronisasi waktu _NTP_.
 - ~~Masalah perintah _/switch_ pada bot telegram.~~
-- Masalah perintah /schedule dimana aktuator tidak berhenti setelah perintah stop dijalankan.
+- ~~Masalah perintah _/schedule_ dimana aktuator tidak berhenti setelah perintah stop _button_ dijalankan.~~
+- 
 
 (in-progress)
 ## Spesifikasi
