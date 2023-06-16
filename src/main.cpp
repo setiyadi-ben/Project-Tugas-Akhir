@@ -197,12 +197,9 @@ const int switch_pin = 5;
 // #define switch_lampuFertilizer 12
 
 // relay default state (my relay configuration is Normally Closed)
-bool state1_waterPump = true;
-bool state2_lampuFertilizer = true;
+bool state1_waterPump = false;
+bool state2_lampuFertilizer = false;
 bool state3_solenoidValve = LOW;
-
-unsigned long sensorStartTime;
-unsigned long sensorDelay = 1250; // delay for 1250 milliseconds
 
 unsigned long previousMillis = 0; // variable to store the last time the LCD was updated
 const long interval = 1000;       // interval at which to update the LCD (1000ms = 1 second)
@@ -243,7 +240,6 @@ void bot_setup()
                             // "{\"command\":\"led_off\", \"description\":\"turn led off\"}" // no comma on last command
                             "]");
   bot.setMyCommands(commands);
-  // bot.sendMessage("25235518", "Hola amigo!", "Markdown");
 }
 // Moved numNewMessages to void loop()
 // void handleNewMessages(int numNewMessages)
@@ -318,7 +314,6 @@ void setup()
 
   // Init and get the time
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
-  // // printLocalTime();
 }
 
 // Defining time schedule for an actuator to work
@@ -331,6 +326,7 @@ void loop()
   time_t now = timeClient.getEpochTime();
   tm timeinfo = *localtime(&now); // Note that the localtime() function is used to convert the epoch time
 
+  // Disconnect notification
   if (WiFi.status() == WL_CONNECTED)
   {
     // int32_t rssi = WiFi.RSSI();
@@ -363,16 +359,6 @@ void loop()
 
     for (int i = 0; i < numNewMessages; i++)
     {
-      // String chat_id = String(bot.messages[i].chat_id);
-      // String text = bot.messages[i].text;
-
-      // // Get all the important data from the message
-      // int message_id = bot.messages[i].message_id;
-      // String from_name = bot.messages[i].from_name;
-      // if (from_name == "")
-      //   from_name = "Guest";
-      // String msg = ""; // init a message string to use
-
       // Chat id of the requester
       String chat_id = String(bot.messages[i].chat_id);
       if (chat_id != CHAT_ID)
@@ -424,13 +410,13 @@ void loop()
 
         String keyboardJson = "["; // start Json
         // updateInlineKeyboard for waterPump
-        keyboardJson += "[{ \"text\" : \"waterpump is ";
+        keyboardJson += "[{ \"text\" : \"_Water pump is_ ";
         keyboardJson += (state1_waterPump ? "ON" : "OFF");
-        keyboardJson += "\", \"callback_data\" : \"/switchButton1\" }]";
+        keyboardJson += "\", \"callback_data\" : \"/onWaterpump\" }]";
         // updateInlineKeyboard for lampuFertilizer
-        keyboardJson += ", [{ \"text\" : \"lampufertilizer is ";
+        keyboardJson += ", [{ \"text\" : \"Lampu _fertilizer is_ ";
         keyboardJson += (state2_lampuFertilizer ? "ON" : "OFF");
-        keyboardJson += "\", \"callback_data\" : \"/switchButton2\" }]";
+        keyboardJson += "\", \"callback_data\" : \"/onLampuFertilizer\" }]";
         // keyboardJson += ", [{ \"text\" : \"Send message\", \"callback_data\" : \"/sendMessage\" }]";
         // keyboardJson += ", [{ \"text\" : \"Go to Google\", \"url\" : \"https://www.google.com\" }]";
         keyboardJson += "]"; // end Json
@@ -448,11 +434,11 @@ void loop()
         // Prepare the buttons
         String keyboardJson = "["; // start Json
         // updateInlineKeyboard
-        keyboardJson += "[{ \"text\" : \"08 AM to 02 PM is ";
+        keyboardJson += "[{ \"text\" : \"08 AM to 02 PM _is_ ";
         keyboardJson += (scheduleEnabled ? "ON" : "OFF");
         keyboardJson += "\", \"callback_data\" : \"/scheduleButton\" }]";
         // updateInlineKeyboard
-        keyboardJson += ", [{ \"text\" : \"schedule demo is ";
+        keyboardJson += ", [{ \"text\" : \"_Schedule demo is_ ";
         keyboardJson += (scheduleEnabled2 ? "ON" : "OFF");
         keyboardJson += "\", \"callback_data\" : \"/scheduleButton2\" }]";
         keyboardJson += "]"; // end Json
@@ -513,41 +499,19 @@ void loop()
                    String(temperature) + "°C\n" +
                    "- Humi : " + String(humidity) + "%\n" +
                    "- Lux : " + String(lux) + "lx\n" +
-                   "- waterPump : " + waterPumpState + "\n" +
-                   "- lampuFertilizer : " + lampuFertilizerState + "\n";
+                   "- _Water pump_ : " + waterPumpState + "\n" +
+                   "- Lampu _fertilizer_ : " + lampuFertilizerState + "\n";
         }
-        // example
-        // if (msg.text == "/led_on@bsfcontrol_bot")
-        // {
-        //   answer = "LED state set to ON";
-        //   ledState = HIGH;
-        //   digitalWrite(ledPin, ledState);
-        // }
-        // if (msg.text == "/led_off@bsfcontrol_bot")
-        // {
-        //   answer = "LED state set to OFF";
-        //   ledState = LOW;
-        //   digitalWrite(ledPin, ledState);
-        // }
-
-        // else
-        //   answer = "Say what?";
 
         bot.sendMessage(msg.chat_id, answer, "Markdown");
       }
 
-      // CALLBACK MANUAL SWITCH BUTTON
-      if (digitalRead(switch_pin) == HIGH && text == "/switchButton1")
+      // CALLBACK MANUAL SWITCH BUTTON TELEGRAM
+      if (digitalRead(switch_pin) == HIGH && text == "/onWaterpump")
       {
-        // Toggle the ledState and update the LED itself
-        // ledState = !ledState;
-        // digitalWrite(ledPin, ledState);
-
-        state1_waterPump = !state1_waterPump;
-        digitalWrite(relay1_waterPump, state1_waterPump);
-
-        // state2_lampuFertilizer = !state2_lampuFertilizer;
-        // digitalWrite(relay2_lampuFertilizer, state2_lampuFertilizer);
+        digitalWrite(relay1_waterPump, LOW);
+        state1_waterPump = true;
+        Serial.println("waterPump turned on (Telegram Switch).");
 
         // Now we can UPDATE the message, lets prepare it for sending:
         msg = "Halo " + from_name + ", perintah berhasil dijalankan.\n";
@@ -557,31 +521,24 @@ void loop()
         // Prepare the buttons
         String keyboardJson = "["; // start Json
         // updateInlineKeyboard for waterPump
-        keyboardJson += "[{ \"text\" : \"waterpump is ";
+        keyboardJson += "[{ \"text\" : \"Water pump is ";
         keyboardJson += (state1_waterPump ? "ON" : "OFF");
-        keyboardJson += "\", \"callback_data\" : \"/switchButton1\" }]";
+        keyboardJson += "\", \"callback_data\" : \"/offWaterpump\" }]";
         // updateInlineKeyboard for lampuFertilizer
-        keyboardJson += ", [{ \"text\" : \"lampufertilizer is ";
+        keyboardJson += ", [{ \"text\" : \"Lampu fertilizer is ";
         keyboardJson += (state2_lampuFertilizer ? "ON" : "OFF");
-        keyboardJson += "\", \"callback_data\" : \"/switchButton2\" }]";
-        // keyboardJson += ", [{ \"text\" : \"Send message\", \"callback_data\" : \"/sendMessage\" }]";
-        // keyboardJson += ", [{ \"text\" : \"Go to Google\", \"url\" : \"https://www.google.com\" }]";
+        keyboardJson += "\", \"callback_data\" : \"/offLampuFertilizer\" }]";
         keyboardJson += "]"; // end Json
 
         // Now send this message including the current message_id as the 5th input to UPDATE that message
         bot.sendMessageWithInlineKeyboard(chat_id, msg, "Markdown", keyboardJson, message_id);
       }
 
-      if (digitalRead(switch_pin) == HIGH && text == "/switchButton2")
+      if (digitalRead(switch_pin) == HIGH && text == "/offWaterpump")
       {
-        // Toggle the ledState and update the LED itself
-        // ledState = !ledState;
-        // digitalWrite(ledPin, ledState);
-        // state1_waterPump = !state1_waterPump;
-        // digitalWrite(relay1_waterPump, state1_waterPump);
-
-        state2_lampuFertilizer = !state2_lampuFertilizer;
-        digitalWrite(relay2_lampuFertilizer, state2_lampuFertilizer);
+        digitalWrite(relay1_waterPump, HIGH);
+        state1_waterPump = false;
+        Serial.println("waterPump turned off (Telegram Switch).");
 
         // Now we can UPDATE the message, lets prepare it for sending:
         msg = "Halo " + from_name + ", perintah berhasil dijalankan.\n";
@@ -591,32 +548,72 @@ void loop()
         // Prepare the buttons
         String keyboardJson = "["; // start Json
         // updateInlineKeyboard for waterPump
-        keyboardJson += "[{ \"text\" : \"waterpump is ";
+        keyboardJson += "[{ \"text\" : \"Water pump is ";
         keyboardJson += (state1_waterPump ? "ON" : "OFF");
-        keyboardJson += "\", \"callback_data\" : \"/switchButton1\" }]";
+        keyboardJson += "\", \"callback_data\" : \"/onWaterpump\" }]";
         // updateInlineKeyboard for lampuFertilizer
-        keyboardJson += ", [{ \"text\" : \"lampufertilizer is ";
+        keyboardJson += ", [{ \"text\" : \"Lampu fertilizer is ";
         keyboardJson += (state2_lampuFertilizer ? "ON" : "OFF");
-        keyboardJson += "\", \"callback_data\" : \"/switchButton2\" }]";
-        // keyboardJson += ", [{ \"text\" : \"Send message\", \"callback_data\" : \"/sendMessage\" }]";
-        // keyboardJson += ", [{ \"text\" : \"Go to Google\", \"url\" : \"https://www.google.com\" }]";
+        keyboardJson += "\", \"callback_data\" : \"/onLampuFertilizer\" }]";
         keyboardJson += "]"; // end Json
 
         // Now send this message including the current message_id as the 5th input to UPDATE that message
         bot.sendMessageWithInlineKeyboard(chat_id, msg, "Markdown", keyboardJson, message_id);
       }
 
-      // Check if the message is a custom command to change the state
-      // if (text == "/scheduleButton2")
-      // {
-      //   scheduleEnabled2 = true;
-      //   bot.sendMessage(chat_id, "Schedule 2 activated.");
-      // }
-      // else
-      // {
-      //   bot.sendMessage(chat_id, "Schedule 2 deactivated.");
-      // }
-      // Add other commands here as needed
+      if (digitalRead(switch_pin) == HIGH && text == "/onLampuFertilizer")
+      {
+        digitalWrite(relay2_lampuFertilizer, LOW);
+        state2_lampuFertilizer = true;
+        Serial.println("lampuFertilizer turned on (Telegram Switch).");
+
+        // Now we can UPDATE the message, lets prepare it for sending:
+        msg = "Halo " + from_name + ", perintah berhasil dijalankan.\n";
+        msg += "Jika gagal, silahkan tekan tombol reset pada panel box.\n\n";
+        // msg += "Try it again, see the button has updated as well:\n\n";
+
+        // Prepare the buttons
+        String keyboardJson = "["; // start Json
+        // updateInlineKeyboard for waterPump
+        keyboardJson += "[{ \"text\" : \"Water pump is ";
+        keyboardJson += (state1_waterPump ? "ON" : "OFF");
+        keyboardJson += "\", \"callback_data\" : \"/offWaterpump\" }]";
+        // updateInlineKeyboard for lampuFertilizer
+        keyboardJson += ", [{ \"text\" : \"Lampu fertilizer is ";
+        keyboardJson += (state2_lampuFertilizer ? "ON" : "OFF");
+        keyboardJson += "\", \"callback_data\" : \"/offLampuFertilizer\" }]";
+        keyboardJson += "]"; // end Json
+
+        // Now send this message including the current message_id as the 5th input to UPDATE that message
+        bot.sendMessageWithInlineKeyboard(chat_id, msg, "Markdown", keyboardJson, message_id);
+      }
+
+      if (digitalRead(switch_pin) == HIGH && text == "/offLampuFertilizer")
+      {
+        digitalWrite(relay2_lampuFertilizer, HIGH);
+        state2_lampuFertilizer = false;
+        Serial.println("LampuFertilizer turned off (Telegram Switch).");
+
+        // Now we can UPDATE the message, lets prepare it for sending:
+        msg = "Halo " + from_name + ", perintah berhasil dijalankan.\n";
+        msg += "Jika gagal, silahkan tekan tombol reset pada panel box.\n\n";
+        // msg += "Try it again, see the button has updated as well:\n\n";
+
+        // Prepare the buttons
+        String keyboardJson = "["; // start Json
+        // updateInlineKeyboard for waterPump
+        keyboardJson += "[{ \"text\" : \"Water pump is ";
+        keyboardJson += (state1_waterPump ? "ON" : "OFF");
+        keyboardJson += "\", \"callback_data\" : \"/onWaterpump\" }]";
+        // updateInlineKeyboard for lampuFertilizer
+        keyboardJson += ", [{ \"text\" : \"Lampu fertilizer is ";
+        keyboardJson += (state2_lampuFertilizer ? "ON" : "OFF");
+        keyboardJson += "\", \"callback_data\" : \"/onLampuFertilizer\" }]";
+        keyboardJson += "]"; // end Json
+
+        // Now send this message including the current message_id as the 5th input to UPDATE that message
+        bot.sendMessageWithInlineKeyboard(chat_id, msg, "Markdown", keyboardJson, message_id);
+      }
 
       // CALLBACK SCHEDULED BUTTON
       if (text == "/scheduleButton")
@@ -923,11 +920,6 @@ void loop()
   lcd.print(" Lamp: ");
   lcd.print(lampuFertilizerState);
 
-  // unsigned long sensorEndTime = millis();
-  // if (sensorEndTime - sensorStartTime < sensorDelay)
-  // {
-  //   delay(sensorDelay - (sensorEndTime - sensorStartTime));
-  // }
   if (isnan(humidity) || isnan(temperature) /* || isnan(f) */)
   {
     Serial.println(F("Failed to read from DHT sensor!"));
