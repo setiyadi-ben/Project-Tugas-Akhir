@@ -230,7 +230,7 @@ void bot_setup()
                             // Print sensor reading from DHT11, BH1750 and actuator state
                             "{\"command\":\"print\", \"description\":\"Output status dari esp32\"},"
                             // Manual Switch On / Off actuator
-                            "{\"command\":\"switch\", \"description\":\"Saklar digital aktuator scr manual\"},"
+                            // "{\"command\":\"switch\", \"description\":\"Saklar digital aktuator scr manual\"},"
                             // Auto setup with provided timeInput data
                             "{\"command\":\"schedule\", \"description\":\"Penjadwalan otomatis aktuator\"}" // no comma on last command
                             // Setmode for actuators to work auto with timeInput or manually
@@ -469,8 +469,8 @@ void loop()
                    "\n"
                    "- _/print_ Mencetak output status aktuator dan pembacaan sensor dari ESP32."
                    "\n"
-                   "- _/switch_ Saklar digital untuk pompa dan lampu."
-                   "\n"
+                  //  "- _/switch_ Saklar digital untuk pompa dan lampu."
+                  //  "\n"
                    "- _/schedule_ Saklar digital dengan waktu penjadwalan otomatis."
                    "\n";
         // if (msg.text == "/switch@bsfcontrol_bot")
