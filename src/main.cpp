@@ -89,10 +89,10 @@ WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, ntpServer, gmtOffset_sec, daylightOffset_sec);
 
 // Wifi network station credentials
-#define WIFI_SSID "XL satu@benny"
-#define WIFI_PASSWORD "jaringanku"
-// #define WIFI_SSID "Redmi 7"
-// #define WIFI_PASSWORD "11111111"
+// #define WIFI_SSID "XL satu@benny"
+// #define WIFI_PASSWORD "jaringanku"
+#define WIFI_SSID "Ariaqi 3"
+#define WIFI_PASSWORD "lisa2218"
 
 // Telegram BOT Token (Get from Botfather)
 /*
