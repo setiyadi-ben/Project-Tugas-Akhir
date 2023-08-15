@@ -697,57 +697,57 @@ void loop()
   }
 
   // scheduleEnabled for field testing only
-  // bool lastScheduleEnabled = false;
-  // if (scheduleEnabled != lastScheduleEnabled)
-  // {
-  //   lastScheduleEnabled = scheduleEnabled;
-  //   if (digitalRead(switch_pin) == HIGH && scheduleEnabled && hour(now) >= 8 && hour(now) < 14)
-  //   {
-  //     // Debugging for an error
-  //     // Serial.println(scheduleEnabled2);
-  //     // Serial.println(hour(now));
-  //     // Serial.println(switch_pin);
-  //     // Serial.println(timeinfo.tm_hour);
-  //     // BH1750 reading affected by lux value to toggle lampuFertilizer
-  //     float lux = lightMeter.readLightLevel();
-  //     if (lux < 3780)
-  //     {
-  //       digitalWrite(relay2_lampuFertilizer, LOW);
-  //       state2_lampuFertilizer = true;
-  //       Serial.println("lampuFertilizer turned on (Scheduler).");
-  //     }
-  //     else
-  //     {
-  //       digitalWrite(relay2_lampuFertilizer, HIGH);
-  //       state2_lampuFertilizer = false;
-  //       Serial.println("lampuFertilizer turned off (Scheduler).");
-  //     }
+  bool lastScheduleEnabled = false;
+  if (scheduleEnabled != lastScheduleEnabled)
+  {
+    lastScheduleEnabled = scheduleEnabled;
+    if (digitalRead(switch_pin) == HIGH && scheduleEnabled && hour(now) >= 8 && hour(now) < 14)
+    {
+      // Debugging for an error
+      // Serial.println(scheduleEnabled2);
+      // Serial.println(hour(now));
+      // Serial.println(switch_pin);
+      // Serial.println(timeinfo.tm_hour);
+      // BH1750 reading affected by lux value to toggle lampuFertilizer
+      float lux = lightMeter.readLightLevel();
+      if (lux < 3780)
+      {
+        digitalWrite(relay2_lampuFertilizer, LOW);
+        state2_lampuFertilizer = true;
+        Serial.println("lampuFertilizer turned on (Scheduler).");
+      }
+      else
+      {
+        digitalWrite(relay2_lampuFertilizer, HIGH);
+        state2_lampuFertilizer = false;
+        Serial.println("lampuFertilizer turned off (Scheduler).");
+      }
 
-  //     // Check if it's time to turn on the water pump
-  //     int previousMinute = 0;
-  //     int currentSecond = second(now);
-  //     int currentMinute = minute(now);
-  //     Serial.print("detik ke : ");
-  //     Serial.println(currentSecond);
-  //     Serial.print("menit ke : ");
-  //     Serial.println(currentMinute);
-  //     if (currentSecond <= 15 && currentMinute == 0 || currentMinute == 30)
-  //     {
-  //       // Turn on water pump for 15 secs
-  //       digitalWrite(relay1_waterPump, LOW);
-  //       state1_waterPump = true;
-  //       Serial.println("waterPump turned on (Scheduler).");
-  //     }
-  //     // (currentSecond > 15 && currentMinute != previousMinute)
-  //     else if (currentSecond > 15)
-  //     {
-  //       // Turn off water pump for 30 min
-  //       digitalWrite(relay1_waterPump, HIGH);
-  //       state1_waterPump = false;
-  //       Serial.println("waterPump turned off (Scheduler).");
-  //     }
-  //   }
-  // }
+      // Check if it's time to turn on the water pump
+      int previousMinute = 0;
+      int currentSecond = second(now);
+      int currentMinute = minute(now);
+      Serial.print("detik ke : ");
+      Serial.println(currentSecond);
+      Serial.print("menit ke : ");
+      Serial.println(currentMinute);
+      if (currentSecond <= 15 && currentMinute == 0 || currentMinute == 30)
+      {
+        // Turn on water pump for 15 secs
+        digitalWrite(relay1_waterPump, LOW);
+        state1_waterPump = true;
+        Serial.println("waterPump turned on (Scheduler).");
+      }
+      // (currentSecond > 15 && currentMinute != previousMinute)
+      else if (currentSecond > 15)
+      {
+        // Turn off water pump for 30 min
+        digitalWrite(relay1_waterPump, HIGH);
+        state1_waterPump = false;
+        Serial.println("waterPump turned off (Scheduler).");
+      }
+    }
+  }
 
   // scheduleEnabled2 for demo testing only
   bool lastScheduleEnabled2 = false;
