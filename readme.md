@@ -33,7 +33,8 @@ https://www.seancdavis.com/posts/three-ways-to-add-image-to-github-readme/ -->
 
 ## Preview Video (Klik Gambar dibawah)
 
-[![PLAYLIST](https://img.youtube.com/vi/TRhNcSzCQi8/hqdefault.jpg)]("https://www.youtube.com/watch?v=TRhNcSzCQi8&list=PL8nDSUqXeZfUDnogHgag6RzNRzioCGDOZ")
+[![Alt Text](https://img.youtube.com/vi/TRhNcSzCQi8/hqdefault.jpg)](https://www.youtube.com/watch?v=TRhNcSzCQi8&list=PL8nDSUqXeZfUDnogHgag6RzNRzioCGDOZ)
+
 
 <!-- EMBED YT PLAYLIST
 https://bobbyhadz.com/blog/embed-video-into-github-readme-markdown -->
