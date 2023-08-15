@@ -1,3 +1,5 @@
+<div style="text-align: justify">
+
 # Digital Library Tugas Akhir ( Thesis )
 ## Sarjana Terapan ( S.Tr ) Teknik Telekomunikasi
 ## Politeknik Negeri Semarang ( Polines )
@@ -23,12 +25,14 @@ _Permasalahan sampah, termasuk sisa makanan, menjadi fokus penting di Indonesia 
 _Kata kunci: Sampah Sisa Makanan, Lalat Black Soldier Fly, IoT, Telegram, Pengendalian Aktuator, Monitoring, Water pump, Lampu penyerbuk._
 
 
+
 ## Wiring Diagram
 ![wiring diagram](tugas_akhir/dokumenTA/wiringDiagram.png)
 <!-- EMBED LOCAL FILE TIPS
 https://www.seancdavis.com/posts/three-ways-to-add-image-to-github-readme/ -->
 
 ## Preview
+
 <iframe width="560" height="315" src="https://www.youtube.com/embed/videoseries?list=PL8nDSUqXeZfUDnogHgag6RzNRzioCGDOZ" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 <!-- EMBED YT PLAYLIST
 https://www.youtube.com/watch?v=XHECZDy_ctg -->
@@ -65,10 +69,10 @@ https://www.youtube.com/watch?v=XHECZDy_ctg -->
 - _Reset Switch_
 
 ## Requirements and How to Set-Up
-Koneksi internet yang lancar untuk terhubung satu kali, komponen - komponen elektronika yang sesuai dengan _wiring diagram_ dan untuk harga komponen yang dimaksud tersedia pada _Bill of Material_.
 
 **Saya anggap siapapun yang akan mencoba mempraktikkan atau berniat menggunakan kode ini sepenuhnya sadar dan memahami tentang pengkabelan jalur kabel seperti yang tertera pada _Wiring Diagram_, cara menggunakan Visual Studio Code beserta dengan ekstensi PlatformIO. Jika sudah, ikutilah langkah singkat dibawah ini.**
 
 ![pengabelan](tugas_akhir/dokumenTA/setup.png)
 
 Ubahlah parameter WIFI_SSID dan WIFI_PASSWORD sesuai dengan jaringan kalian. Kemudian juga pada BOT_TOKEN dan CHAT_ID, jika bertanya bagaimana? Kalian dapat mencarinya di Youtube sendiri terima kasih.
+</div>
