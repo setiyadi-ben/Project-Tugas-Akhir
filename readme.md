@@ -31,11 +31,12 @@ _Kata kunci: Sampah Sisa Makanan, Lalat Black Soldier Fly, IoT, Telegram, Pengen
 <!-- EMBED LOCAL FILE TIPS
 https://www.seancdavis.com/posts/three-ways-to-add-image-to-github-readme/ -->
 
-## Preview
+## Preview Video (Klik Gambar dibawah)
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/videoseries?list=PL8nDSUqXeZfUDnogHgag6RzNRzioCGDOZ" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+[![PLAYLIST](https://img.youtube.com/vi/TRhNcSzCQi8/hqdefault.jpg)]("https://www.youtube.com/watch?v=TRhNcSzCQi8&list=PL8nDSUqXeZfUDnogHgag6RzNRzioCGDOZ")
+
 <!-- EMBED YT PLAYLIST
-https://www.youtube.com/watch?v=XHECZDy_ctg -->
+https://bobbyhadz.com/blog/embed-video-into-github-readme-markdown -->
 
 ## Fitur - fitur
 - Mengendalikan kondisi _water pump_ ( LOW | HIGH ).
