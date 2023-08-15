@@ -6,6 +6,7 @@
 
 ## Dikembangkan oleh Benny Hartanto Setiyadi
 ### Bermitra dengan :
+- Giarto sebagai Owner dari Rumah Maggot Kabupaten Semarang.
 - Gunardi sebagai Penanggung Jawab dari Rumah Maggot Kabupaten Semarang.
 ### Dibawah bimbingan :
 - Ari Sriyanto N., S.T., M.T., M.Sc., ( Dosen Pembimbing I ).
@@ -13,13 +14,25 @@
 
 ## Judul Tugas Akhir
   ### " Sistem Pengendalian dan Monitoring Produksi Telur Lalat Black Soldier Fly "
-  ### Berkas PDF Tugas Akhir
-    (Silahkan klik tautan ini)
 
 ## Abstrak
-(in-progress)
+_Benny Hartanto Setiyadi. “Sistem Pengendalian dan Monitoring Produksi Telur Lalat Black Soldier Fly Berbasis Internet of Things (IoT)”, Tugas Akhir Sarjana Terapan Teknik Telekomunikasi Jurusan Teknik Elektro Politeknik Negeri Semarang, dibawah bimbingan Ari Sriyanto N., S.T., M.T., M.Sc., dan Sindung H.W.S., B.S.E.E, M.Eng.Sc., 08 Agustus 2023, 70 Halaman._
+
+_Permasalahan sampah, termasuk sisa makanan, menjadi fokus penting di Indonesia dan negara lain. Pemerintah, terutama Kementerian Lingkungan Hidup dan Kehutanan, berupaya mengedukasi masyarakat dan Pengelola Tempat Pembuangan Akhir (TPA) untuk mengolah sampah sisa makanan menjadi pakan ternak alternatif. Larva lalat Black Soldier Fly (BSF) menawarkan potensi sebagai pengurai limbah sisa makanan yang efisien. Penelitian ini bertujuan merancang sistem IoT untuk mengendalikan dan memantau kondisi lingkungan kandang, dengan integrasi platform Telegram. Sistem ini mengontrol pompa air dan lampu fertilisasi, serta memiliki mode hybrid, yaitu manual menggunakan GPIO switch dan otomatis melalui bot Telegram. Dengan prototipe ini, penyemprotan air pada kandang lalat BSF dapat terjadwal secara otomatis melalui logika pemrograman pada bot Telegram, menghemat pemakaian air dibandingkan metode konvensional. Penggunaan aktuator lampu fertilisasi membantu lalat BSF beraktivitas normal saat intensitas cahaya rendah. Penelitian ini menggunakan metode Software Development Life Cycle model waterfall, meliputi tahap observasi, analisis kebutuhan, perancangan, implementasi, uji lapangan, dan analisis hasil. Hasil pengujian hardware membuktikan perangkat prototipe efektif mengendalikan aktuator secara manual dan otomatis melalui bot Telegram. Hasil pembacaan sensor menunjukkan akurasi sensor DHT11 yang baik, dengan margin prosentase error 3% untuk temperatur dan 7% untuk kelembapan. Namun, perlu dicatat sensor BH1750 memiliki prosentase error intensitas cahaya sebesar 159%._
+
+_Kata kunci: Sampah Sisa Makanan, Lalat Black Soldier Fly, IoT, Telegram, Pengendalian Aktuator, Monitoring, Water pump, Lampu penyerbuk._
+
+
+## Wiring Diagram
+![wiring diagram](tugas_akhir/dokumenTA/wiringDiagram.png)
+<!-- EMBED LOCAL FILE TIPS
+https://www.seancdavis.com/posts/three-ways-to-add-image-to-github-readme/ -->
+
 ## Preview
-(in-progress)
+<iframe width="560" height="315" src="https://www.youtube.com/embed/videoseries?list=PL8nDSUqXeZfUDnogHgag6RzNRzioCGDOZ" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+<!-- EMBED YT PLAYLIST
+https://www.youtube.com/watch?v=XHECZDy_ctg -->
+
 ## Fitur - fitur
 - Mengendalikan kondisi _water pump_ ( LOW | HIGH ).
 - Mengendalikan kondisi lampu _fertilizer_ ( LOW | HIGH ).
@@ -38,9 +51,7 @@
 - Perintah /schedule pada bot telegram kemungkinan akan terganggu jika koneksi WiFi terputus dikarenakan menggunakan sinkronisasi waktu _NTP_.
 - ~~Masalah perintah _/switch_ pada bot telegram.~~
 - ~~Masalah perintah _/schedule_ dimana aktuator tidak berhenti setelah perintah stop _button_ dijalankan.~~
-- 
 
-(in-progress)
 ## Spesifikasi
 - _Panel box dimensions_ (cm, cm, cm, cm).
 - _Single_ 220VAC _power input splitted to_ ESP32, lampu _fertilizer_ dan _water pump_.
@@ -56,10 +67,8 @@
 ## Requirements and How to Set-Up
 Koneksi internet yang lancar untuk terhubung satu kali, komponen - komponen elektronika yang sesuai dengan _wiring diagram_ dan untuk harga komponen yang dimaksud tersedia pada _Bill of Material_.
 
-**Saya anggap siapapun yang akan mencoba mempraktikkan atau berniat menggunakan kode ini sepenuhnya sadar dan memahami tentang pengkabelan jalur kabel seperti yang tertera pada _Wiring Diagram_, cara menggunakan Vscode beserta dengan ekstensi PlatformIO. Jika sudah, ikutilah langkah singkat dibawah ini.**
+**Saya anggap siapapun yang akan mencoba mempraktikkan atau berniat menggunakan kode ini sepenuhnya sadar dan memahami tentang pengkabelan jalur kabel seperti yang tertera pada _Wiring Diagram_, cara menggunakan Visual Studio Code beserta dengan ekstensi PlatformIO. Jika sudah, ikutilah langkah singkat dibawah ini.**
 
-(in-progress)
-## Wiring Diagram
-(in-progress)
-## Bill of Material ( BoM )
-(in-progress)
+![pengabelan](tugas_akhir/dokumenTA/setup.png)
+
+Ubahlah parameter WIFI_SSID dan WIFI_PASSWORD sesuai dengan jaringan kalian. Kemudian juga pada BOT_TOKEN dan CHAT_ID, jika bertanya bagaimana? Kalian dapat mencarinya di Youtube sendiri terima kasih.
