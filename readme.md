@@ -77,4 +77,5 @@ https://bobbyhadz.com/blog/embed-video-into-github-readme-markdown -->
 ![pengabelan](tugas_akhir/dokumenTA/setup.png)
 
 Ubahlah parameter WIFI_SSID dan WIFI_PASSWORD sesuai dengan jaringan kalian. Kemudian juga pada BOT_TOKEN dan CHAT_ID, jika bertanya bagaimana? Kalian dapat mencarinya di Youtube sendiri terima kasih.
+
 </div>

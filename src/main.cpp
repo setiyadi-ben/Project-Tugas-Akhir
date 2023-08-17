@@ -186,36 +186,15 @@ LiquidCrystal_I2C lcd(0x27, 20, 4); // Address 0x27, 20 columns, 4 rows
 // relay pinout
 const int relay1_waterPump = 18;
 const int relay2_lampuFertilizer = 19;
-// unused relay
-#define relay3_solenoidValve 20
 
 // Manual switch from GPIO pin
 const int switch_pin = 5;
 #define switch_waterPump 13
 #define switch_lampuFertilizer 12
-// #define switch_lampuFertilizer 12
 
-// relay default state (my relay configuration is Normally Closed)
+// relay default state (my relay configuration is Normally Open)
 bool state1_waterPump = false;
 bool state2_lampuFertilizer = false;
-bool state3_solenoidValve = LOW;
-
-unsigned long previousMillis = 0; // variable to store the last time the LCD was updated
-const long interval = 1000;       // interval at which to update the LCD (1000ms = 1 second)
-
-// test state using builtin led esp32
-const int ledPin = 2;
-// bool ledState = LOW;
-
-// void printLocalTime()
-// {
-//   struct tm timeinfo;
-//   if (!getLocalTime(&timeinfo))
-//   {
-//     Serial.println("Failed to obtain time");
-//     return;
-//   }
-// }
 
 void bot_setup()
 {
@@ -229,21 +208,10 @@ void bot_setup()
                             "{\"command\":\"help\",  \"description\":\"Panduan penggunaan bot\"},"
                             // Print sensor reading from DHT11, BH1750 and actuator state
                             "{\"command\":\"print\", \"description\":\"Output status dari esp32\"},"
-                            // Manual Switch On / Off actuator
-                            // "{\"command\":\"switch\", \"description\":\"Saklar digital aktuator scr manual\"},"
-                            // Auto setup with provided timeInput data
                             "{\"command\":\"schedule\", \"description\":\"Penjadwalan otomatis aktuator\"}" // no comma on last command
-                            // Setmode for actuators to work auto with timeInput or manually
-                            //"{\"command\":\"setmode\", \"description\":\"Setup esp32 manual atau auto\"},"
-                            // "{\"command\":\"led_on\", \"description\":\"turn led on\"},"
-                            // "{\"command\":\"led_off\", \"description\":\"turn led off\"}" // no comma on last command
                             "]");
   bot.setMyCommands(commands);
 }
-// Moved numNewMessages to void loop()
-// void handleNewMessages(int numNewMessages)
-// {
-// }
 
 void setup()
 {
@@ -261,14 +229,9 @@ void setup()
   lcd.begin(20, 4);
   lcd.backlight();
 
-  // define builtin led
-  pinMode(ledPin, OUTPUT);
-  // digitalWrite(ledPin, ledState);
-
   // Setup Relay Pin as OUTPUT
   pinMode(relay1_waterPump, OUTPUT);
   pinMode(relay2_lampuFertilizer, OUTPUT);
-  pinMode(relay3_solenoidValve, OUTPUT);
 
   // Setup Manual GPIO Switch
   pinMode(switch_pin, INPUT_PULLUP);
@@ -389,30 +352,6 @@ void loop()
         Serial.println(bot.messages[i].text);
       }
 
-      // if (text == "/switch@bsfcontrol_bot")
-      // {
-      //   // lets create a friendly welcome message
-      //   // msg = "Hi " + from_name + "!\n";
-      //   msg = "Berikut merupakan saklar digital untuk pompa dan lampu.\n\n";
-      //   msg += "Silahkan tekan tombol dibawah untuk mengendalikan kondisi perangkat.\n\n";
-
-      //   String keyboardJson = "["; // start Json
-      //   // updateInlineKeyboard for waterPump
-      //   keyboardJson += "[{ \"text\" : \"Water pump is ";
-      //   keyboardJson += (state1_waterPump ? "ON" : "OFF");
-      //   keyboardJson += "\", \"callback_data\" : \"/manualWaterPump\" }]";
-      //   // updateInlineKeyboard for lampuFertilizer
-      //   keyboardJson += ", [{ \"text\" : \"Lampu fertilizer is ";
-      //   keyboardJson += (state2_lampuFertilizer ? "ON" : "OFF");
-      //   keyboardJson += "\", \"callback_data\" : \"/manualLampuFertilizer\" }]";
-      //   // keyboardJson += ", [{ \"text\" : \"Send message\", \"callback_data\" : \"/sendMessage\" }]";
-      //   // keyboardJson += ", [{ \"text\" : \"Go to Google\", \"url\" : \"https://www.google.com\" }]";
-      //   keyboardJson += "]"; // end Json
-
-      //   // first time, send this message as a normal inline keyboard message:
-      //   bot.sendMessageWithInlineKeyboard(chat_id, msg, "Markdown", keyboardJson);
-      // }
-
       if (text == "/schedule@bsfcontrol_bot")
       {
         // msg header
@@ -447,12 +386,95 @@ void loop()
       // Define the lowState and highState variables
       String lowState = "on";
       String highState = "off";
-
       // Get the state of the waterPump and lampuFertilizer variables as a string
       String waterPumpState = state1_waterPump == true ? lowState : highState;
       String lampuFertilizerState = state2_lampuFertilizer == true ? lowState : highState;
 
       String answer;
+      // Monitoring events
+      int lastSentHour = -1; // Initialize to a value that won't match a valid hour
+      int currentHour = hour(now);
+
+      if ((currentHour == 9 || currentHour == 14) && currentHour != lastSentHour)
+      {
+        // Monitoring events
+        telegramMessage &msg = bot.messages[i];
+        // Use the state variable in the answer variable
+        answer = "Berikut merupakan data monitoring dari hasil perhitungan :\n"
+                 "- Temp : " +
+                 String(temperature) + "°C\n" +
+                 "- Humi : " + String(humidity) + "%\n" +
+                 "- Lux : " + String(lux) + "lx\n";
+
+        // ... (other conditions and warnings)
+
+        // Send the message
+        bot.sendMessage(msg.chat_id, answer, "Markdown");
+
+        // Update the last sent hour
+        lastSentHour = currentHour;
+      }
+
+      if (hour(now) >= 9 && hour(now) < 14)
+      {
+        telegramMessage &msg = bot.messages[i];
+        if (temperature < 27)
+        {
+          // Use the state variable in the answer variable
+          answer = "Berikut merupakan data monitoring dari hasil perhitungan :"
+                   "\n"
+                   "- Temp : " +
+                   String(temperature) + "°C\n" +
+                   "- Humi : " + String(humidity) + "%\n" +
+                   "- Lux : " + String(lux) + "lx\n" +
+                   "Peringatan ! Suhu terlalu rendah."
+                   "\n" +
+                   bot.sendMessage(msg.chat_id, answer, "Markdown");
+        }
+        else if (temperature > 36)
+        {
+          // Use the state variable in the answer variable
+          answer = "Berikut merupakan data monitoring dari hasil perhitungan :"
+                   "\n"
+                   "- Temp : " +
+                   String(temperature) + "°C\n" +
+                   "- Humi : " + String(humidity) + "%\n" +
+                   "- Lux : " + String(lux) + "lx\n" +
+                   "Peringatan ! Suhu terlalu tinggi."
+                   "\n" +
+                   bot.sendMessage(msg.chat_id, answer, "Markdown");
+        }
+
+        if (humidity < 60)
+        {
+          // Use the state variable in the answer variable
+          answer = "Berikut merupakan data monitoring dari hasil perhitungan :"
+                   "\n"
+                   "- Temp : " +
+                   String(temperature) + "°C\n" +
+                   "- Humi : " + String(humidity) + "%\n" +
+                   "- Lux : " + String(lux) + "lx\n" +
+                   "Peringatan ! Kelembaban udara terlalu kering."
+                   "\n" +
+                   bot.sendMessage(msg.chat_id, answer, "Markdown");
+        }
+
+        if (humidity < 3780)
+        {
+          // Use the state variable in the answer variable
+          answer = "Berikut merupakan data monitoring dari hasil perhitungan :"
+                   "\n"
+                   "- Temp : " +
+                   String(temperature) + "°C\n" +
+                   "- Humi : " + String(humidity) + "%\n" +
+                   "- Lux : " + String(lux) + "lx\n" +
+                   "Peringatan ! Intensitas cahaya terlalu gelap."
+                   "\n" +
+                   bot.sendMessage(msg.chat_id, answer, "Markdown");
+        }
+      }
+
+      // Bot commands
       for (int i = 0; i < numNewMessages; i++)
       {
         telegramMessage &msg = bot.messages[i];
@@ -469,12 +491,8 @@ void loop()
                    "\n"
                    "- _/print_ Mencetak output status aktuator dan pembacaan sensor dari ESP32."
                    "\n"
-                  //  "- _/switch_ Saklar digital untuk pompa dan lampu."
-                  //  "\n"
                    "- _/schedule_ Saklar digital dengan waktu penjadwalan otomatis."
                    "\n";
-        // if (msg.text == "/switch@bsfcontrol_bot")
-        //   answer = "----------------------------";
         else if (msg.text == "/start@bsfcontrol_bot")
           answer = "Selamat Datang *" + msg.from_name + "*, bot online dan siap digunakan.";
         else if (msg.text == "/print@bsfcontrol_bot")
@@ -494,89 +512,8 @@ void loop()
         bot.sendMessage(msg.chat_id, answer, "Markdown");
       }
 
-      // CALLBACK MANUAL SWITCH BUTTON TELEGRAM
-      /*
-      To avoid conflicts between the switch code and the conditions you provided, you can introduce additional checks
-      to ensure that the switch code doesn't interfere with the scheduler logic. One approach is to use an else statement
-      before each switch condition to separate the logic.
-      ~ CHATGPT
-      */
-
-      if (text == "/manualWaterPump")
-      {
-        // Toggle TRUE & FALSE statements
-        manualWaterPump = !manualWaterPump;
-        // Debug statements
-        if (manualWaterPump == true)
-        {
-          Serial.print(manualWaterPump);
-          Serial.println(" - Manual water pump activated.");
-        }
-        else
-        {
-          Serial.print(manualWaterPump);
-          Serial.println(" - Manual water pump deactivated.");
-        }
-
-        // Now we can UPDATE the message, lets prepare it for sending:
-        msg = "Halo " + from_name + ", perintah berhasil dijalankan.\n";
-        msg += "Jika gagal, silahkan tekan tombol reset pada panel box.\n\n";
-        // msg += "Try it again, see the button has updated as well:\n\n";
-
-        // Prepare the buttons
-        String keyboardJson = "["; // start Json
-        // updateInlineKeyboard for waterPump
-        keyboardJson += "[{ \"text\" : \"Water pump is ";
-        keyboardJson += (state1_waterPump ? "ON" : "OFF");
-        keyboardJson += "\", \"callback_data\" : \"/manualWaterPump\" }]";
-        // updateInlineKeyboard for lampuFertilizer
-        keyboardJson += ", [{ \"text\" : \"Lampu fertilizer is ";
-        keyboardJson += (state2_lampuFertilizer ? "ON" : "OFF");
-        keyboardJson += "\", \"callback_data\" : \"/manualLampuFertilizer\" }]";
-        keyboardJson += "]"; // end Json
-
-        // Now send this message including the current message_id as the 5th input to UPDATE that message
-        bot.sendMessageWithInlineKeyboard(chat_id, msg, "Markdown", keyboardJson, message_id);
-      }
-      else if (text == "/manualLampuFertilizer") //&& digitalRead(switch_lampuFertilizer) == LOW
-      {
-        // Toggle TRUE & FALSE statements
-        manualLampuFertilizer = !manualLampuFertilizer;
-        // Debug statements
-        if (manualLampuFertilizer == true)
-        {
-          Serial.print(manualLampuFertilizer);
-          Serial.println(" - Manual Lampu Fertilizer activated.");
-        }
-        else
-        {
-          Serial.print(manualLampuFertilizer);
-          Serial.println(" - Manual Lampu Fertilizer deactivated.");
-        }
-
-        // Now we can UPDATE the message, lets prepare it for sending:
-        msg = "Halo " + from_name + ", perintah berhasil dijalankan.\n";
-        msg += "Jika gagal, silahkan tekan tombol reset pada panel box.\n\n";
-        // msg += "Try it again, see the button has updated as well:\n\n";
-
-        // Prepare the buttons
-        String keyboardJson = "["; // start Json
-        // updateInlineKeyboard for waterPump
-        keyboardJson += "[{ \"text\" : \"Water pump is ";
-        keyboardJson += (state1_waterPump ? "ON" : "OFF");
-        keyboardJson += "\", \"callback_data\" : \"/manualWaterPump\" }]";
-        // updateInlineKeyboard for lampuFertilizer
-        keyboardJson += ", [{ \"text\" : \"Lampu fertilizer is ";
-        keyboardJson += (state2_lampuFertilizer ? "ON" : "OFF");
-        keyboardJson += "\", \"callback_data\" : \"/manualLampuFertilizer\" }]";
-        keyboardJson += "]"; // end Json
-
-        // Now send this message including the current message_id as the 5th input to UPDATE that message
-        bot.sendMessageWithInlineKeyboard(chat_id, msg, "Markdown", keyboardJson, message_id);
-      }
-
       // CALLBACK SCHEDULED BUTTON
-      else if (text == "/scheduleButton")
+      if (text == "/scheduleButton")
       {
         // Toggle TRUE & FALSE statements
         scheduleEnabled = !scheduleEnabled;
@@ -851,20 +788,6 @@ void loop()
   {
     Serial.println("Bot Telegram mode.");
   }
-
-  // // get current time lcd not used
-  // struct tm timeinfo2;
-  // if (!getLocalTime(&timeinfo2))
-  // {
-  //   Serial.println("Failed to obtain time");
-  //   return;
-  // }
-  // char formattedDate2[7];
-  // strftime(formattedDate2, sizeof(formattedDate2), "%d %b", &timeinfo2);
-  // // Serial.println(formattedDate);
-  // char formattedTime2[6];
-  // strftime(formattedTime2, sizeof(formattedTime2), "%H:%M", &timeinfo2);
-  // // Serial.println(formattedTime);
 
   // Formatted date and time to display on LCD
   char formattedDate[7];
