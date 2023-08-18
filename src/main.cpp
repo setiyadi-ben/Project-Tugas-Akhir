@@ -402,127 +402,6 @@ void loop()
       int lastSentHour = -1; // Initialize to a value that won't match a valid hour
       int currentHour = hour(now);
 
-      // if ((currentHour == 9 || currentHour == 14) && currentHour != lastSentHour)
-      // {
-      //   // Monitoring events
-      //   // telegramMessage &msg = bot.messages[i];
-      //   // Use the state variable in the answer variable
-      //   answer = "Berikut merupakan data monitoring dari hasil perhitungan :\n"
-      //            "- Temp : " +
-      //            String(temperature) + "°C\n" +
-      //            "- Humi : " + String(humidity) + "%\n" +
-      //            "- Lux : " + String(lux) + "lx\n";
-
-      //   // ... (other conditions and warnings)
-
-      //   // Send the message
-      //   bot.sendMessage(chat_id, answer, "Markdown");
-
-      //   // Update the last sent hour
-      //   lastSentHour = currentHour;
-      // }
-
-      if (hour(now) >= 8 && hour(now) < 23)
-      {
-          telegramMessage &msg = bot.messages[i];
-          if (temperature < 27)
-          {
-            // Use the state variable in the answer variable
-            answer = "Berikut merupakan data monitoring dari hasil perhitungan :"
-                     "\n"
-                     "- Temp : " +
-                     String(temperature) + "°C\n" +
-                     "- Humi : " + String(humidity) + "%\n" +
-                     "- Lux : " + String(lux) + "lx\n" +
-                     "Peringatan ! Suhu terlalu rendah."
-                     "\n" +
-                     bot.sendMessage(msg.chat_id, answer, "Markdown");
-          }
-          else if (temperature > 36)
-          {
-            // Use the state variable in the answer variable
-            answer = "Berikut merupakan data monitoring dari hasil perhitungan :"
-                     "\n"
-                     "- Temp : " +
-                     String(temperature) + "°C\n" +
-                     "- Humi : " + String(humidity) + "%\n" +
-                     "- Lux : " + String(lux) + "lx\n" +
-                     "Peringatan ! Suhu terlalu tinggi."
-                     "\n" +
-                     bot.sendMessage(msg.chat_id, answer, "Markdown");
-          }
-
-          else if (temperature > 36 && humidity < 60)
-          {
-            // Use the state variable in the answer variable
-            answer = "Berikut merupakan data monitoring dari hasil perhitungan :"
-                     "\n"
-                     "- Temp : " +
-                     String(temperature) + "°C\n" +
-                     "- Humi : " + String(humidity) + "%\n" +
-                     "- Lux : " + String(lux) + "lx\n" +
-                     "Peringatan ! Suhu terlalu tinggi dan kelembaban terlalu rendah"
-                     "\n" +
-                     bot.sendMessage(msg.chat_id, answer, "Markdown");
-          }
-
-          else if (temperature > 36 && humidity < 60 && lux <3780)
-          {
-            // Use the state variable in the answer variable
-            answer = "Berikut merupakan data monitoring dari hasil perhitungan :"
-                     "\n"
-                     "- Temp : " +
-                     String(temperature) + "°C\n" +
-                     "- Humi : " + String(humidity) + "%\n" +
-                     "- Lux : " + String(lux) + "lx\n" +
-                     "Peringatan ! Suhu terlalu tinggi, kelembaban dan intensitas cahaya terlalu rendah"
-                     "\n" +
-                     bot.sendMessage(msg.chat_id, answer, "Markdown");
-          }
-
-          else if (humidity < 60)
-          {
-            // Use the state variable in the answer variable
-            answer = "Berikut merupakan data monitoring dari hasil perhitungan :"
-                     "\n"
-                     "- Temp : " +
-                     String(temperature) + "°C\n" +
-                     "- Humi : " + String(humidity) + "%\n" +
-                     "- Lux : " + String(lux) + "lx\n" +
-                     "Peringatan ! Kelembaban udara terlalu kering."
-                     "\n" +
-                     bot.sendMessage(msg.chat_id, answer, "Markdown");
-          }
-
-          else if (lux < 3780)
-          {
-            // Use the state variable in the answer variable
-            answer = "Berikut merupakan data monitoring dari hasil perhitungan :"
-                     "\n"
-                     "- Temp : " +
-                     String(temperature) + "°C\n" +
-                     "- Humi : " + String(humidity) + "%\n" +
-                     "- Lux : " + String(lux) + "lx\n" +
-                     "Peringatan ! Intensitas cahaya terlalu gelap."
-                     "\n" +
-                     bot.sendMessage(msg.chat_id, answer, "Markdown");
-          }
-
-          else if (humidity < 60 && lux < 3780)
-          {
-            // Use the state variable in the answer variable
-            answer = "Berikut merupakan data monitoring dari hasil perhitungan :"
-                     "\n"
-                     "- Temp : " +
-                     String(temperature) + "°C\n" +
-                     "- Humi : " + String(humidity) + "%\n" +
-                     "- Lux : " + String(lux) + "lx\n" +
-                     "Peringatan ! Kelembaban dan intensitas cahaya terlalu rendah"
-                     "\n" +
-                     bot.sendMessage(msg.chat_id, answer, "Markdown");
-          }
-        }
-
       // Bot commands
       for (int i = 0; i < numNewMessages; i++)
       {
@@ -544,19 +423,20 @@ void loop()
                    "\n";
         else if (msg.text == "/start@bsfcontrol_bot")
           answer = "Selamat Datang *" + msg.from_name + "*, bot online dan siap digunakan.";
-        // else if (msg.text == "/print@bsfcontrol_bot")
-        // {
+        else if (msg.text == "/print@bsfcontrol_bot")
+        {
 
-        //   // Use the state variable in the answer variable
-        //   answer = "Berikut merupakan data monitoring dari hasil perhitungan :"
-        //            "\n"
-        //            "- Temp : " +
-        //            String(temperature) + "°C\n" +
-        //            "- Humi : " + String(humidity) + "%\n" +
-        //            "- Lux : " + String(lux) + "lx\n" +
-        //            "- _Water pump_ : " + waterPumpState + "\n" +
-        //            "- Lampu _fertilizer_ : " + lampuFertilizerState + "\n";
-        // }
+          // Use the state variable in the answer variable
+          answer = "Berikut merupakan data monitoring dari hasil perhitungan :"
+                   "\n"
+                   "- Temp : " +
+                   String(temperature) + "°C\n" +
+                   "- Humi : " + String(humidity) + "%\n" +
+                   "- Lux : " + String(lux) + "lx\n" +
+                   "- _Water pump_ : " + waterPumpState + "\n" +
+                   "- Lampu _fertilizer_ : " + lampuFertilizerState + "\n" +
+                   "Parameter ideal : temperatur 27 s/d 35C, kelembapan minimum 60%, intensitas cahaya 3780lx.""\n";
+        }
 
         bot.sendMessage(msg.chat_id, answer, "Markdown");
       }
@@ -724,6 +604,16 @@ void loop()
         state1_waterPump = true;
         Serial.println("waterPump turned on (Scheduler).");
       }
+
+      // (currentSecond > 15 && currentMinute != previousMinute)
+      else if (float humidity = dht.readHumidity(); currentSecond <= 15 && humidity >= 85)
+      {
+        // Turn off water pump for 30 min
+        digitalWrite(relay1_waterPump, HIGH);
+        state1_waterPump = false;
+        Serial.println("waterPump turned off (Scheduler).");
+      }
+
       // (currentSecond > 15 && currentMinute != previousMinute)
       else if (currentSecond > 15)
       {
