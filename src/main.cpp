@@ -292,12 +292,7 @@ void loop()
 
   // Disconnect notification
   if (WiFi.status() == WL_CONNECTED)
-  {
-    // int32_t rssi = WiFi.RSSI();
-    // Serial.print("Signal Strength (RSSI): ");
-    // Serial.print(rssi);
-    // Serial.println(" dBm");
-  }
+  {}
   else
   {
     Serial.println("WiFi disconnected");
@@ -398,10 +393,6 @@ void loop()
       sprintf(formattedTime, "%02d:%02d", hour(now), minute(now));
 
       String answer;
-      // Monitoring events
-      int lastSentHour = -1; // Initialize to a value that won't match a valid hour
-      int currentHour = hour(now);
-
       // Bot commands
       for (int i = 0; i < numNewMessages; i++)
       {
