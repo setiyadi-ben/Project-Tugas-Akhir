@@ -89,10 +89,10 @@ WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, ntpServer, gmtOffset_sec, daylightOffset_sec);
 
 // Wifi network station credentials
-// #define WIFI_SSID "XL satu@benny"
-// #define WIFI_PASSWORD "jaringanku"
-#define WIFI_SSID "Ariaqi 3"
-#define WIFI_PASSWORD "lisa2218"
+#define WIFI_SSID "XL satu@benny"
+#define WIFI_PASSWORD "jaringanku"
+// #define WIFI_SSID "Ariaqi 3"
+// #define WIFI_PASSWORD "lisa2218"
 
 // Telegram BOT Token (Get from Botfather)
 /*
@@ -292,12 +292,7 @@ void loop()
 
   // Disconnect notification
   if (WiFi.status() == WL_CONNECTED)
-  {
-    // int32_t rssi = WiFi.RSSI();
-    // Serial.print("Signal Strength (RSSI): ");
-    // Serial.print(rssi);
-    // Serial.println(" dBm");
-  }
+  {}
   else
   {
     Serial.println("WiFi disconnected");
@@ -361,7 +356,7 @@ void loop()
         // Prepare the buttons
         String keyboardJson = "["; // start Json
         // updateInlineKeyboard
-        keyboardJson += "[{ \"text\" : \"08 AM to 02 PM is ";
+        keyboardJson += "[{ \"text\" : \"09 AM to 02 PM is ";
         keyboardJson += (scheduleEnabled ? "ON" : "OFF");
         keyboardJson += "\", \"callback_data\" : \"/scheduleButton\" }]";
         // updateInlineKeyboard
@@ -390,90 +385,14 @@ void loop()
       String waterPumpState = state1_waterPump == true ? lowState : highState;
       String lampuFertilizerState = state2_lampuFertilizer == true ? lowState : highState;
 
+      // Formatted date and time to display on LCD
+      char formattedDate[7];
+      char formattedTime[6];
+      // sprintf(formattedDate, "%02d %03d", day(now), month(now));
+      strftime(formattedDate, sizeof(formattedDate), "%d %b", &timeinfo);
+      sprintf(formattedTime, "%02d:%02d", hour(now), minute(now));
+
       String answer;
-      // Monitoring events
-      int lastSentHour = -1; // Initialize to a value that won't match a valid hour
-      int currentHour = hour(now);
-
-      if ((currentHour == 9 || currentHour == 14) && currentHour != lastSentHour)
-      {
-        // Monitoring events
-        telegramMessage &msg = bot.messages[i];
-        // Use the state variable in the answer variable
-        answer = "Berikut merupakan data monitoring dari hasil perhitungan :\n"
-                 "- Temp : " +
-                 String(temperature) + "°C\n" +
-                 "- Humi : " + String(humidity) + "%\n" +
-                 "- Lux : " + String(lux) + "lx\n";
-
-        // ... (other conditions and warnings)
-
-        // Send the message
-        bot.sendMessage(msg.chat_id, answer, "Markdown");
-
-        // Update the last sent hour
-        lastSentHour = currentHour;
-      }
-
-      if (hour(now) >= 9 && hour(now) < 14)
-      {
-        telegramMessage &msg = bot.messages[i];
-        if (temperature < 27)
-        {
-          // Use the state variable in the answer variable
-          answer = "Berikut merupakan data monitoring dari hasil perhitungan :"
-                   "\n"
-                   "- Temp : " +
-                   String(temperature) + "°C\n" +
-                   "- Humi : " + String(humidity) + "%\n" +
-                   "- Lux : " + String(lux) + "lx\n" +
-                   "Peringatan ! Suhu terlalu rendah."
-                   "\n" +
-                   bot.sendMessage(msg.chat_id, answer, "Markdown");
-        }
-        else if (temperature > 36)
-        {
-          // Use the state variable in the answer variable
-          answer = "Berikut merupakan data monitoring dari hasil perhitungan :"
-                   "\n"
-                   "- Temp : " +
-                   String(temperature) + "°C\n" +
-                   "- Humi : " + String(humidity) + "%\n" +
-                   "- Lux : " + String(lux) + "lx\n" +
-                   "Peringatan ! Suhu terlalu tinggi."
-                   "\n" +
-                   bot.sendMessage(msg.chat_id, answer, "Markdown");
-        }
-
-        if (humidity < 60)
-        {
-          // Use the state variable in the answer variable
-          answer = "Berikut merupakan data monitoring dari hasil perhitungan :"
-                   "\n"
-                   "- Temp : " +
-                   String(temperature) + "°C\n" +
-                   "- Humi : " + String(humidity) + "%\n" +
-                   "- Lux : " + String(lux) + "lx\n" +
-                   "Peringatan ! Kelembaban udara terlalu kering."
-                   "\n" +
-                   bot.sendMessage(msg.chat_id, answer, "Markdown");
-        }
-
-        if (humidity < 3780)
-        {
-          // Use the state variable in the answer variable
-          answer = "Berikut merupakan data monitoring dari hasil perhitungan :"
-                   "\n"
-                   "- Temp : " +
-                   String(temperature) + "°C\n" +
-                   "- Humi : " + String(humidity) + "%\n" +
-                   "- Lux : " + String(lux) + "lx\n" +
-                   "Peringatan ! Intensitas cahaya terlalu gelap."
-                   "\n" +
-                   bot.sendMessage(msg.chat_id, answer, "Markdown");
-        }
-      }
-
       // Bot commands
       for (int i = 0; i < numNewMessages; i++)
       {
@@ -506,7 +425,8 @@ void loop()
                    "- Humi : " + String(humidity) + "%\n" +
                    "- Lux : " + String(lux) + "lx\n" +
                    "- _Water pump_ : " + waterPumpState + "\n" +
-                   "- Lampu _fertilizer_ : " + lampuFertilizerState + "\n";
+                   "- Lampu _fertilizer_ : " + lampuFertilizerState + "\n" +
+                   "Parameter ideal : temperatur 27 s/d 35C, kelembapan minimum 60%, intensitas cahaya 3780lx.""\n";
         }
 
         bot.sendMessage(msg.chat_id, answer, "Markdown");
@@ -537,7 +457,7 @@ void loop()
         // Prepare the buttons
         String keyboardJson = "["; // start Json
         // updateInlineKeyboard
-        keyboardJson += "[{ \"text\" : \"08 AM to 02 PM is ";
+        keyboardJson += "[{ \"text\" : \"09 AM to 02 PM is ";
         keyboardJson += (scheduleEnabled ? "ON" : "OFF");
         keyboardJson += "\", \"callback_data\" : \"/scheduleButton\" }]";
         // updateInlineKeyboard
@@ -574,7 +494,7 @@ void loop()
         // Prepare the buttons
         String keyboardJson = "["; // start Json
         // updateInlineKeyboard
-        keyboardJson += "[{ \"text\" : \"08 AM to 02 PM is ";
+        keyboardJson += "[{ \"text\" : \"09 AM to 02 PM is ";
         keyboardJson += (scheduleEnabled ? "ON" : "OFF");
         keyboardJson += "\", \"callback_data\" : \"/scheduleButton\" }]";
         // updateInlineKeyboard
@@ -675,6 +595,16 @@ void loop()
         state1_waterPump = true;
         Serial.println("waterPump turned on (Scheduler).");
       }
+
+      // (currentSecond > 15 && currentMinute != previousMinute)
+      else if (float humidity = dht.readHumidity(); currentSecond <= 15 && humidity >= 85)
+      {
+        // Turn off water pump for 30 min
+        digitalWrite(relay1_waterPump, HIGH);
+        state1_waterPump = false;
+        Serial.println("waterPump turned off (Scheduler).");
+      }
+
       // (currentSecond > 15 && currentMinute != previousMinute)
       else if (currentSecond > 15)
       {
@@ -789,23 +719,6 @@ void loop()
     Serial.println("Bot Telegram mode.");
   }
 
-  // Formatted date and time to display on LCD
-  char formattedDate[7];
-  char formattedTime[6];
-  // sprintf(formattedDate, "%02d %03d", day(now), month(now));
-  strftime(formattedDate, sizeof(formattedDate), "%d %b", &timeinfo);
-  sprintf(formattedTime, "%02d:%02d", hour(now), minute(now));
-
-  // Define the lowState and highState variables
-  String lowState = "on";
-  String highState = "off";
-
-  // Get the state of the waterPump and lampuFertilizer variables as a string
-  String waterPumpState = state1_waterPump == true ? lowState : highState;
-  String lampuFertilizerState = state2_lampuFertilizer == true ? lowState : highState;
-
-  // sensorStartTime = millis();
-  // check time difference and delay if necessary
   // Reading temperature or humidity takes about 250 milliseconds!
   // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
   // Read temperature as Celsius (the default)
@@ -813,8 +726,21 @@ void loop()
   float humidity = dht.readHumidity();
   // Read temperature as Fahrenheit (isFahrenheit = true)
   // float f = dht.readTemperature(true);
-  // Read light intensity
+  // Compute value of light intensity
   float lux = lightMeter.readLightLevel();
+  // Define the lowState and highState variables
+  String lowState = "on";
+  String highState = "off";
+  // Get the state of the waterPump and lampuFertilizer variables as a string
+  String waterPumpState = state1_waterPump == true ? lowState : highState;
+  String lampuFertilizerState = state2_lampuFertilizer == true ? lowState : highState;
+
+  // Formatted date and time to display on LCD
+  char formattedDate[7];
+  char formattedTime[6];
+  // sprintf(formattedDate, "%02d %03d", day(now), month(now));
+  strftime(formattedDate, sizeof(formattedDate), "%d %b", &timeinfo);
+  sprintf(formattedTime, "%02d:%02d", hour(now), minute(now));
 
   // Print the sensor data on the LCD display
   lcd.clear();
@@ -844,6 +770,11 @@ void loop()
   if (isnan(humidity) || isnan(temperature) /* || isnan(f) */)
   {
     Serial.println(F("Failed to read from DHT sensor!"));
+    return;
+  }
+  if (isnan(lux))
+  {
+    Serial.println(F("Failed to read from BH1750 sensor!"));
     return;
   }
 }
