@@ -264,6 +264,7 @@ void setup()
 
   // Telegram Bot Setup from Library
   bot_setup();
+  bot.sendMessage(CHAT_ID, "Bot started up", "");
 
   // Initialize and synchronize time with NTP
   ntpUDP.begin(ntpPort);
@@ -292,7 +293,8 @@ void loop()
 
   // Disconnect notification
   if (WiFi.status() == WL_CONNECTED)
-  {}
+  {
+  }
   else
   {
     Serial.println("WiFi disconnected");
@@ -378,6 +380,7 @@ void loop()
       // float f = dht.readTemperature(true);
       // Compute value of light intensity
       float lux = lightMeter.readLightLevel();
+      float calibratedLux = (lux + (1.59 * lux));
       // Define the lowState and highState variables
       String lowState = "on";
       String highState = "off";
@@ -423,10 +426,11 @@ void loop()
                    "- Temp : " +
                    String(temperature) + "°C\n" +
                    "- Humi : " + String(humidity) + "%\n" +
-                   "- Lux : " + String(lux) + "lx\n" +
+                   "- Lux : " + String(calibratedLux) + "lx\n" +
                    "- _Water pump_ : " + waterPumpState + "\n" +
                    "- Lampu _fertilizer_ : " + lampuFertilizerState + "\n" +
-                   "Parameter ideal : temperatur 27 s/d 35C, kelembapan minimum 60%, intensitas cahaya 3780lx.""\n";
+                   "Parameter ideal : temperatur 27 s/d 35C, kelembapan minimum 60%, intensitas cahaya 3780lx."
+                   "\n";
         }
 
         bot.sendMessage(msg.chat_id, answer, "Markdown");
@@ -558,7 +562,7 @@ void loop()
   if (scheduleEnabled != lastScheduleEnabled)
   {
     lastScheduleEnabled = scheduleEnabled;
-    if (digitalRead(switch_pin) == HIGH && scheduleEnabled && hour(now) >= 8 && hour(now) < 14)
+    if (digitalRead(switch_pin) == HIGH && scheduleEnabled && hour(now) >= 9 && hour(now) < 14)
     {
       // Debugging for an error
       // Serial.println(scheduleEnabled2);
@@ -596,19 +600,9 @@ void loop()
         Serial.println("waterPump turned on (Scheduler).");
       }
 
-      // (currentSecond > 15 && currentMinute != previousMinute)
-      else if (float humidity = dht.readHumidity(); currentSecond <= 15 && humidity >= 85)
+      else
       {
-        // Turn off water pump for 30 min
-        digitalWrite(relay1_waterPump, HIGH);
-        state1_waterPump = false;
-        Serial.println("waterPump turned off (Scheduler).");
-      }
-
-      // (currentSecond > 15 && currentMinute != previousMinute)
-      else if (currentSecond > 15)
-      {
-        // Turn off water pump for 30 min
+        // Turn off water pump for high humidity
         digitalWrite(relay1_waterPump, HIGH);
         state1_waterPump = false;
         Serial.println("waterPump turned off (Scheduler).");
@@ -622,7 +616,7 @@ void loop()
   {
     lastScheduleEnabled2 = scheduleEnabled2;
 
-    if (digitalRead(switch_pin) == HIGH && scheduleEnabled2)
+    if (digitalRead(switch_pin) == HIGH && scheduleEnabled2 )
     {
       // Debugging for an error
       // Serial.println(scheduleEnabled2);
@@ -632,7 +626,7 @@ void loop()
       // BH1750 reading affected by lux value to toggle lampuFertilizer
       float lux = lightMeter.readLightLevel();
 
-      if (lux < 3780 && scheduleEnabled2 == true)
+      if (lux < 3780)
       {
         digitalWrite(relay2_lampuFertilizer, LOW);
         state2_lampuFertilizer = true;
@@ -660,6 +654,7 @@ void loop()
         state1_waterPump = true;
         Serial.println("waterPump turned on (Scheduler).");
       }
+
       else if (currentSecond > 15 && currentMinute != previousMinute && scheduleEnabled2 == true)
       {
         digitalWrite(relay1_waterPump, HIGH);
@@ -728,6 +723,7 @@ void loop()
   // float f = dht.readTemperature(true);
   // Compute value of light intensity
   float lux = lightMeter.readLightLevel();
+  float calibratedLux = (lux + (1.59 * lux));
   // Define the lowState and highState variables
   String lowState = "on";
   String highState = "off";
@@ -758,7 +754,7 @@ void loop()
 
   lcd.setCursor(0, 2);
   lcd.print("Lux : ");
-  lcd.print(lux);
+  lcd.print(calibratedLux);
   lcd.print(" lx");
 
   lcd.setCursor(0, 3);
